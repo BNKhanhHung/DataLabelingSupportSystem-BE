@@ -1,67 +1,103 @@
 package com.anotation.userrole;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import java.time.Instant;
+import com.anotation.project.Project;
+import com.anotation.role.Role;
+import com.anotation.user.User;
+import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
+// ============================================================
+// CODE CŨ (team có sẵn) - đã được refactor bên dưới
+// ============================================================
+//
+// @Entity
+// @Table(name = "user_roles", schema = "public")
+// public class UserRole {
+//     @Id
+//     @GeneratedValue(strategy = GenerationType.IDENTITY)
+//     private Long id;                          // ← Long, không phải UUID
+//
+//     @Column(name = "user_id")
+//     private UUID userId;                      // ← raw UUID, không phải @ManyToOne
+//
+//     @Column(name = "role_id")
+//     private Long roleId;                      // ← raw Long, không phải @ManyToOne
+//
+//     @Column(name = "assigned_by")
+//     private UUID assignedBy;                  // ← có assigned_by thay vì project_id
+//
+//     @Column(name = "assigned_at")
+//     private Instant assignedAt;
+// }
+//
+// ============================================================
+// CODE MỚI (refactored)
+// ============================================================
+
 @Entity
-@Table(name = "user_roles", schema = "public")
+@Table(name = "user_roles", schema = "public", uniqueConstraints = {
+        @UniqueConstraint(name = "uq_user_role_project", columnNames = { "user_id", "role_id", "project_id" })
+})
 public class UserRole {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private UUID id;
 
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "role_id", nullable = false)
-    private Long roleId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
-    @Column(name = "assigned_by")
-    private UUID assignedBy;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 
-    @Column(name = "assigned_at")
-    private Instant assignedAt;
+    @Column(name = "assigned_at", nullable = false, updatable = false)
+    private LocalDateTime assignedAt;
 
-    public Long getId() {
+    @PrePersist
+    public void onCreate() {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
+        assignedAt = LocalDateTime.now();
+    }
+
+    // Getters & Setters
+    public UUID getId() {
         return id;
     }
 
-    public UUID getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
-    public Long getRoleId() {
-        return roleId;
+    public Role getRole() {
+        return role;
     }
 
-    public void setRoleId(Long roleId) {
-        this.roleId = roleId;
+    public void setRole(Role role) {
+        this.role = role;
     }
 
-    public UUID getAssignedBy() {
-        return assignedBy;
+    public Project getProject() {
+        return project;
     }
 
-    public void setAssignedBy(UUID assignedBy) {
-        this.assignedBy = assignedBy;
+    public void setProject(Project project) {
+        this.project = project;
     }
 
-    public Instant getAssignedAt() {
+    public LocalDateTime getAssignedAt() {
         return assignedAt;
     }
-
-    public void setAssignedAt(Instant assignedAt) {
-        this.assignedAt = assignedAt;
-    }
 }
-

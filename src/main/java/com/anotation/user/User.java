@@ -1,11 +1,6 @@
 package com.anotation.user;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -27,6 +22,10 @@ public class User {
     @Column(nullable = false)
     private String status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "system_role", nullable = false)
+    private SystemRole systemRole = SystemRole.USER;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -38,6 +37,9 @@ public class User {
         Instant now = Instant.now();
         if (id == null) {
             id = UUID.randomUUID();
+        }
+        if (systemRole == null) {
+            systemRole = SystemRole.USER;
         }
         createdAt = now;
         updatedAt = now;
@@ -84,6 +86,14 @@ public class User {
         this.status = status;
     }
 
+    public SystemRole getSystemRole() {
+        return systemRole;
+    }
+
+    public void setSystemRole(SystemRole systemRole) {
+        this.systemRole = systemRole;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -92,4 +102,3 @@ public class User {
         return updatedAt;
     }
 }
-
