@@ -3,6 +3,7 @@ package com.anotation.annotation;
 import com.anotation.task.TaskItem;
 import com.anotation.user.User;
 import jakarta.persistence.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -14,6 +15,8 @@ import java.util.UUID;
 public class Annotation {
 
     @Id
+    @GeneratedValue
+    @UuidGenerator
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -39,8 +42,6 @@ public class Annotation {
 
     @PrePersist
     public void onCreate() {
-        if (id == null)
-            id = UUID.randomUUID();
         if (status == null)
             status = AnnotationStatus.SUBMITTED;
         createdAt = LocalDateTime.now();

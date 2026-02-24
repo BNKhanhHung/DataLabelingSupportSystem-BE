@@ -26,9 +26,6 @@ public class UserRoleRequest {
     @NotNull(message = "Role ID is required")
     private UUID roleId;
 
-    @NotNull(message = "Project ID is required")
-    private UUID projectId;
-
     public UUID getUserId() {
         return userId;
     }
@@ -45,11 +42,4 @@ public class UserRoleRequest {
         this.roleId = roleId;
     }
 
-    public UUID getProjectId() {
-        return projectId;
-    }
-
-    public void setProjectId(UUID projectId) {
-        this.projectId = projectId;
-    }
 }

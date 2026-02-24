@@ -1,6 +1,7 @@
 package com.anotation.project;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.UuidGenerator;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -9,6 +10,8 @@ import java.util.UUID;
 public class Project {
 
     @Id
+    @GeneratedValue
+    @UuidGenerator
     private UUID id;
 
     @Column(nullable = false, unique = true)
@@ -22,9 +25,6 @@ public class Project {
 
     @PrePersist
     public void onCreate() {
-        if (id == null) {
-            id = UUID.randomUUID();
-        }
         createdAt = LocalDateTime.now();
     }
 

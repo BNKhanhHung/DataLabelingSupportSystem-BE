@@ -31,7 +31,9 @@ public class CustomUserDetailsService implements UserDetailsService {
                         "User not found: " + usernameOrEmail));
 
         // Map system role to Spring Security authority
-        String authority = "ROLE_" + user.getSystemRole().name();
+        String authority = "ROLE_" + (user.getSystemRole() != null
+                ? user.getSystemRole().name()
+                : "USER");
 
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),

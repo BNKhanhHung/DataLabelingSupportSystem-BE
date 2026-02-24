@@ -10,8 +10,6 @@ public class UserRoleResponse {
     private String username;
     private UUID roleId;
     private String roleName;
-    private UUID projectId;
-    private String projectName;
     private LocalDateTime assignedAt;
 
     public UUID getId() {
@@ -52,22 +50,6 @@ public class UserRoleResponse {
 
     public void setRoleName(String roleName) {
         this.roleName = roleName;
-    }
-
-    public UUID getProjectId() {
-        return projectId;
-    }
-
-    public void setProjectId(UUID projectId) {
-        this.projectId = projectId;
-    }
-
-    public String getProjectName() {
-        return projectName;
-    }
-
-    public void setProjectName(String projectName) {
-        this.projectName = projectName;
     }
 
     public LocalDateTime getAssignedAt() {

@@ -21,18 +21,12 @@ import java.util.UUID;
 @Repository
 public interface UserRoleRepository extends JpaRepository<UserRole, UUID> {
 
-    // Check duplicate: cùng user + role + project
-    boolean existsByUserIdAndRoleIdAndProjectId(UUID userId, UUID roleId, UUID projectId);
-
-    // Lấy tất cả role của 1 user trong 1 project
-    List<UserRole> findByUserIdAndProjectId(UUID userId, UUID projectId);
-
-    // Lấy tất cả assignments của 1 project
-    List<UserRole> findByProjectId(UUID projectId);
+    // Check duplicate: cùng user + role
+    boolean existsByUserIdAndRoleId(UUID userId, UUID roleId);
 
     // Lấy tất cả assignments của 1 user
     List<UserRole> findByUserId(UUID userId);
 
     // Role-name check: used by TaskServiceImpl to validate annotator/reviewer
-    boolean existsByUserIdAndProjectIdAndRoleNameIgnoreCase(UUID userId, UUID projectId, String roleName);
+    boolean existsByUserIdAndRoleNameIgnoreCase(UUID userId, String roleName);
 }

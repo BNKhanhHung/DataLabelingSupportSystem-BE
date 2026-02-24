@@ -8,8 +8,6 @@ public interface UserRoleService {
 
     UserRoleResponse getById(UUID id);
 
-    List<UserRoleResponse> getByProject(UUID projectId);
-
     List<UserRoleResponse> getByUser(UUID userId);
 
     UserRoleResponse assign(UserRoleRequest request);

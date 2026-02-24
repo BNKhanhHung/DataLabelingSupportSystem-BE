@@ -2,6 +2,7 @@ package com.anotation.dataset;
 
 import com.anotation.project.Project;
 import jakarta.persistence.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -13,6 +14,8 @@ import java.util.UUID;
 public class Dataset {
 
     @Id
+    @GeneratedValue
+    @UuidGenerator
     private UUID id;
 
     @Column(nullable = false)
@@ -30,8 +33,6 @@ public class Dataset {
 
     @PrePersist
     public void onCreate() {
-        if (id == null)
-            id = UUID.randomUUID();
         createdAt = LocalDateTime.now();
     }
 

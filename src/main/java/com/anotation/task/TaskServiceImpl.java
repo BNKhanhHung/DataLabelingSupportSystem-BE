@@ -97,18 +97,18 @@ public class TaskServiceImpl implements TaskService {
         User reviewer = userRepository.findById(reviewerId)
                 .orElseThrow(() -> new NotFoundException("Reviewer not found: " + reviewerId));
 
-        // 4. Annotator must have role "Annotator" in this project
-        if (!userRoleRepository.existsByUserIdAndProjectIdAndRoleNameIgnoreCase(
-                annotatorId, projectId, "Annotator")) {
+        // 4. Annotator must have role "Annotator"
+        if (!userRoleRepository.existsByUserIdAndRoleNameIgnoreCase(
+                annotatorId, "Annotator")) {
             throw new BadRequestException(
-                    "User " + annotatorId + " does not have role 'Annotator' in project " + projectId);
+                    "User " + annotatorId + " does not have role 'Annotator'.");
         }
 
-        // 5. Reviewer must have role "Reviewer" in this project
-        if (!userRoleRepository.existsByUserIdAndProjectIdAndRoleNameIgnoreCase(
-                reviewerId, projectId, "Reviewer")) {
+        // 5. Reviewer must have role "Reviewer"
+        if (!userRoleRepository.existsByUserIdAndRoleNameIgnoreCase(
+                reviewerId, "Reviewer")) {
             throw new BadRequestException(
-                    "User " + reviewerId + " does not have role 'Reviewer' in project " + projectId);
+                    "User " + reviewerId + " does not have role 'Reviewer'.");
         }
 
         // 6 & 7. Validate each DataItem

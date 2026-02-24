@@ -1,6 +1,7 @@
 package com.anotation.auth;
 
 import com.anotation.exception.BadRequestException;
+import com.anotation.user.SystemRole;
 import com.anotation.user.User;
 import com.anotation.user.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,9 +44,13 @@ public class AuthService {
         }
 
         // 3. Generate JWT with systemRole
+        SystemRole systemRole = user.getSystemRole() != null
+                ? user.getSystemRole()
+                : SystemRole.USER;
         String token = jwtUtil.generateToken(
-                user.getId(), user.getUsername(), user.getSystemRole().name());
+                user.getId(), user.getUsername(), systemRole.name());
 
         return new AuthResponse(token, user.getId(), user.getUsername(), user.getEmail());
     }
+
 }

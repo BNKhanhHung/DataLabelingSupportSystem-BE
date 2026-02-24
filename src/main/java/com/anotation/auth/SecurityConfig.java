@@ -40,16 +40,17 @@ public class SecurityConfig {
 
                         // ── Public endpoints ─────────────────────────────────────
                         .requestMatchers(
-                                "/api/auth/**",
+                                "/api/auth/login",
                                 "/swagger",
                                 "/swagger-ui/**",
                                 "/api-docs/**",
                                 "/v3/api-docs/**")
                         .permitAll()
 
-                        // ── ADMIN only — quản lý users & roles ───────────────────
+                        // ── ADMIN only — quản lý users ───────────────────────────
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/roles/**").hasRole("ADMIN")
+                        // ── Roles — cho phép user đã đăng nhập ───────────────────
+                        .requestMatchers("/api/roles/**").authenticated()
 
                         // ── All other endpoints — authenticated users ────────────
                         // Project-level authorization (Manager/Annotator/Reviewer)

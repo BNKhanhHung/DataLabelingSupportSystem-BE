@@ -1,6 +1,7 @@
 package com.anotation.user;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -8,6 +9,8 @@ import java.util.UUID;
 @Table(name = "users", schema = "public")
 public class User {
     @Id
+    @GeneratedValue
+    @UuidGenerator
     private UUID id;
 
     @Column(nullable = false)
@@ -23,7 +26,7 @@ public class User {
     private String status;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "system_role", nullable = false)
+    @Column(name = "system_role")
     private SystemRole systemRole = SystemRole.USER;
 
     @Column(name = "created_at", nullable = false)
@@ -35,9 +38,6 @@ public class User {
     @PrePersist
     public void onCreate() {
         Instant now = Instant.now();
-        if (id == null) {
-            id = UUID.randomUUID();
-        }
         if (systemRole == null) {
             systemRole = SystemRole.USER;
         }
