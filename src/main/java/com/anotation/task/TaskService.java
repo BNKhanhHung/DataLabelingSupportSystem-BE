@@ -1,16 +1,20 @@
 package com.anotation.task;
 
-import java.util.List;
+import com.anotation.common.PageResponse;
+import org.springframework.data.domain.Pageable;
+
 import java.util.UUID;
 
 public interface TaskService {
-    List<TaskResponse> getAll();
+    PageResponse<TaskResponse> getAll(Pageable pageable);
 
     TaskResponse getById(UUID id);
 
-    List<TaskResponse> getByProject(UUID projectId);
+    PageResponse<TaskResponse> getByProject(UUID projectId, Pageable pageable);
 
-    List<TaskResponse> getByAnnotator(UUID annotatorId);
+    PageResponse<TaskResponse> getByAnnotator(UUID annotatorId, Pageable pageable);
+
+    PageResponse<TaskResponse> search(String name, TaskStatus status, Pageable pageable);
 
     TaskResponse create(TaskRequest request);
 

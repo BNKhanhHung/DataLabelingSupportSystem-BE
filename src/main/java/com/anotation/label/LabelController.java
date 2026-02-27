@@ -1,13 +1,14 @@
 package com.anotation.label;
 
+import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,8 +24,8 @@ public class LabelController {
 
     @GetMapping
     @Operation(summary = "Get all labels")
-    public ResponseEntity<List<LabelResponse>> getAll() {
-        return ResponseEntity.ok(labelService.getAll());
+    public ResponseEntity<PageResponse<LabelResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(labelService.getAll(pageable));
     }
 
     @GetMapping("/{id}")
@@ -35,8 +36,10 @@ public class LabelController {
 
     @GetMapping("/project/{projectId}")
     @Operation(summary = "Get all labels in a project")
-    public ResponseEntity<List<LabelResponse>> getByProject(@PathVariable UUID projectId) {
-        return ResponseEntity.ok(labelService.getByProject(projectId));
+    public ResponseEntity<PageResponse<LabelResponse>> getByProject(
+            @PathVariable UUID projectId,
+            Pageable pageable) {
+        return ResponseEntity.ok(labelService.getByProject(projectId, pageable));
     }
 
     @PostMapping

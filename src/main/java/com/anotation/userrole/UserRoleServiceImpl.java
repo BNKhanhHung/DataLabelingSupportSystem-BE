@@ -1,15 +1,16 @@
 package com.anotation.userrole;
 
+import com.anotation.common.PageResponse;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
 import com.anotation.role.Role;
 import com.anotation.role.RoleRepository;
 import com.anotation.user.User;
 import com.anotation.user.UserRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -34,11 +35,8 @@ public class UserRoleServiceImpl implements UserRoleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserRoleResponse> getAll() {
-        return userRoleRepository.findAll()
-                .stream()
-                .map(userRoleMapper::toResponse)
-                .toList();
+    public PageResponse<UserRoleResponse> getAll(Pageable pageable) {
+        return PageResponse.from(userRoleRepository.findAll(pageable), userRoleMapper::toResponse);
     }
 
     @Override
@@ -49,11 +47,9 @@ public class UserRoleServiceImpl implements UserRoleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserRoleResponse> getByUser(UUID userId) {
-        return userRoleRepository.findByUserId(userId)
-                .stream()
-                .map(userRoleMapper::toResponse)
-                .toList();
+    public PageResponse<UserRoleResponse> getByUser(UUID userId, Pageable pageable) {
+        return PageResponse.from(userRoleRepository.findByUserId(userId, pageable),
+                userRoleMapper::toResponse);
     }
 
     @Override

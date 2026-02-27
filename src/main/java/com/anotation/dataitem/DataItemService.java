@@ -1,16 +1,22 @@
 package com.anotation.dataitem;
 
-import java.util.List;
+import com.anotation.common.PageResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.UUID;
 
 public interface DataItemService {
-    List<DataItemResponse> getAll();
+    PageResponse<DataItemResponse> getAll(Pageable pageable);
 
     DataItemResponse getById(UUID id);
 
-    List<DataItemResponse> getByDataset(UUID datasetId);
+    PageResponse<DataItemResponse> getByDataset(UUID datasetId, Pageable pageable);
 
-    List<DataItemResponse> getByDatasetAndStatus(UUID datasetId, DataItemStatus status);
+    PageResponse<DataItemResponse> getByDatasetAndStatus(
+            UUID datasetId, DataItemStatus status, Pageable pageable);
+
+    DataItemResponse upload(UUID datasetId, MultipartFile file, String metadata);
 
     DataItemResponse create(DataItemRequest request);
 

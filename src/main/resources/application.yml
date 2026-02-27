@@ -7,6 +7,10 @@ spring:
     username: postgres.wqillyzrmdbjvxfnckhx
     password: SofwareDevelopemnt
     driver-class-name: org.postgresql.Driver
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:10MB}
   jpa:
     hibernate:
       ddl-auto: update
@@ -24,3 +28,9 @@ springdoc:
 jwt:
   secret: ${JWT_SECRET:MyDefaultSuperSecretKeyThatIsAtLeast256BitsLong!!}
   expiration-ms: ${JWT_EXPIRATION:86400000}   # 24 hours
+
+supabase:
+  url: ${SUPABASE_URL}
+  service-key: ${SUPABASE_SERVICE_KEY}
+  storage:
+    bucket: ${SUPABASE_STORAGE_BUCKET:data-items}

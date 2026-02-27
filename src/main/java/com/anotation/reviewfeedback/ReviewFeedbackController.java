@@ -1,13 +1,14 @@
 package com.anotation.reviewfeedback;
 
+import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,8 +24,8 @@ public class ReviewFeedbackController {
 
     @GetMapping
     @Operation(summary = "Get all review feedbacks")
-    public ResponseEntity<List<ReviewResponse>> getAll() {
-        return ResponseEntity.ok(reviewFeedbackService.getAll()); // 200
+    public ResponseEntity<PageResponse<ReviewResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(reviewFeedbackService.getAll(pageable)); // 200
     }
 
     @GetMapping("/{id}")
@@ -35,14 +36,18 @@ public class ReviewFeedbackController {
 
     @GetMapping("/task/{taskId}")
     @Operation(summary = "Get all review feedbacks in a task")
-    public ResponseEntity<List<ReviewResponse>> getByTask(@PathVariable UUID taskId) {
-        return ResponseEntity.ok(reviewFeedbackService.getByTask(taskId)); // 200
+    public ResponseEntity<PageResponse<ReviewResponse>> getByTask(
+            @PathVariable UUID taskId,
+            Pageable pageable) {
+        return ResponseEntity.ok(reviewFeedbackService.getByTask(taskId, pageable)); // 200
     }
 
     @GetMapping("/reviewer/{reviewerId}")
     @Operation(summary = "Get all review feedbacks submitted by a reviewer")
-    public ResponseEntity<List<ReviewResponse>> getByReviewer(@PathVariable UUID reviewerId) {
-        return ResponseEntity.ok(reviewFeedbackService.getByReviewer(reviewerId)); // 200
+    public ResponseEntity<PageResponse<ReviewResponse>> getByReviewer(
+            @PathVariable UUID reviewerId,
+            Pageable pageable) {
+        return ResponseEntity.ok(reviewFeedbackService.getByReviewer(reviewerId, pageable)); // 200
     }
 
     @PostMapping

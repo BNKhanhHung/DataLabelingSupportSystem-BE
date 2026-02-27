@@ -1,13 +1,14 @@
 package com.anotation.userrole;
 
+import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 @RestController
 @RequestMapping("/api/user-roles")
@@ -22,8 +23,8 @@ public class UserRoleController {
 
     @GetMapping
     @Operation(summary = "Get all user-role assignments")
-    public ResponseEntity<List<UserRoleResponse>> getAll() {
-        return ResponseEntity.ok(userRoleService.getAll()); // 200
+    public ResponseEntity<PageResponse<UserRoleResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(userRoleService.getAll(pageable)); // 200
     }
 
     @GetMapping("/{id}")
@@ -33,9 +34,11 @@ public class UserRoleController {
     }
 
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Get all projects a user is assigned to")
-    public ResponseEntity<List<UserRoleResponse>> getByUser(@PathVariable UUID userId) {
-        return ResponseEntity.ok(userRoleService.getByUser(userId)); // 200
+    @Operation(summary = "Get all roles assigned to a user")
+    public ResponseEntity<PageResponse<UserRoleResponse>> getByUser(
+            @PathVariable UUID userId,
+            Pageable pageable) {
+        return ResponseEntity.ok(userRoleService.getByUser(userId, pageable)); // 200
     }
 
     @PostMapping

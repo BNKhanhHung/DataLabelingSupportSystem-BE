@@ -1,9 +1,10 @@
 package com.anotation.userrole;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.UUID;
 
 // ============================================================
@@ -25,7 +26,7 @@ public interface UserRoleRepository extends JpaRepository<UserRole, UUID> {
     boolean existsByUserIdAndRoleId(UUID userId, UUID roleId);
 
     // Lấy tất cả assignments của 1 user
-    List<UserRole> findByUserId(UUID userId);
+    Page<UserRole> findByUserId(UUID userId, Pageable pageable);
 
     // Role-name check: used by TaskServiceImpl to validate annotator/reviewer
     boolean existsByUserIdAndRoleNameIgnoreCase(UUID userId, String roleName);

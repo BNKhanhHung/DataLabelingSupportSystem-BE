@@ -1,5 +1,6 @@
 package com.anotation.annotation;
 
+import com.anotation.common.PageResponse;
 import com.anotation.exception.BadRequestException;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
@@ -13,10 +14,12 @@ import com.anotation.task.TaskRepository;
 import com.anotation.task.TaskStatus;
 import com.anotation.user.User;
 import com.anotation.user.UserRepository;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -48,10 +51,8 @@ public class AnnotationServiceImpl implements AnnotationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AnnotationResponse> getAll() {
-        return annotationRepository.findAll().stream()
-                .map(annotationMapper::toResponse)
-                .toList();
+    public PageResponse<AnnotationResponse> getAll(Pageable pageable) {
+        return PageResponse.from(annotationRepository.findAll(pageable), annotationMapper::toResponse);
     }
 
     @Override
@@ -62,10 +63,9 @@ public class AnnotationServiceImpl implements AnnotationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AnnotationResponse> getByTask(UUID taskId) {
-        return annotationRepository.findByTaskId(taskId).stream()
-                .map(annotationMapper::toResponse)
-                .toList();
+    public PageResponse<AnnotationResponse> getByTask(UUID taskId, Pageable pageable) {
+        return PageResponse.from(annotationRepository.findByTaskId(taskId, pageable),
+                annotationMapper::toResponse);
     }
 
     // ── Submit (Create) ──────────────────────────────────────────────────────────
@@ -80,25 +80,29 @@ public class AnnotationServiceImpl implements AnnotationService {
         Task task = taskItem.getTask();
         DataItem dataItem = taskItem.getDataItem();
 
-        // 2. Only Task.annotator can submit
-        UUID taskAnnotatorId = task.getAnnotator().getId();
-        if (!taskAnnotatorId.equals(request.getAnnotatorId())) {
-            throw new BadRequestException(
-                    "User " + request.getAnnotatorId() + " is not the annotator of this task.");
+        // 2. Authenticated user must match request annotator
+        User currentUser = getCurrentUser();
+        if (!currentUser.getId().equals(request.getAnnotatorId())) {
+            throw new BadRequestException("Authenticated user does not match annotator.");
         }
 
-        // 3. Annotator user must exist
-        User annotator = userRepository.findById(request.getAnnotatorId())
-                .orElseThrow(() -> new NotFoundException(
-                        "Annotator not found: " + request.getAnnotatorId()));
+        // 3. Only Task.annotator can submit
+        UUID taskAnnotatorId = task.getAnnotator().getId();
+        if (!taskAnnotatorId.equals(currentUser.getId())) {
+            throw new BadRequestException(
+                    "User " + currentUser.getId() + " is not the annotator of this task.");
+        }
 
-        // 4. DataItem must be ASSIGNED
+        // 4. Annotator user must exist
+        User annotator = currentUser;
+
+        // 5. DataItem must be ASSIGNED
         if (dataItem.getStatus() != DataItemStatus.ASSIGNED) {
             throw new BadRequestException(
                     "DataItem is not ASSIGNED (current: " + dataItem.getStatus() + ")");
         }
 
-        // 5. Prevent duplicate annotation for same TaskItem
+        // 6. Prevent duplicate annotation for same TaskItem
         if (annotationRepository.existsByTaskItemId(taskItem.getId())) {
             throw new DuplicateException(
                     "An annotation already exists for TaskItem: " + taskItem.getId());
@@ -112,11 +116,11 @@ public class AnnotationServiceImpl implements AnnotationService {
         // status defaults to SUBMITTED via @PrePersist
         annotationRepository.save(annotation);
 
-        // 6. DataItem status → ANNOTATED
+        // 7. DataItem status → ANNOTATED
         dataItem.setStatus(DataItemStatus.ANNOTATED);
         dataItemRepository.save(dataItem);
 
-        // 7. Task status → IN_PROGRESS (on first annotation submission)
+        // 8. Task status → IN_PROGRESS (on first annotation submission)
         if (task.getStatus() == TaskStatus.OPEN) {
             task.setStatus(TaskStatus.IN_PROGRESS);
             taskRepository.save(task);
@@ -130,6 +134,11 @@ public class AnnotationServiceImpl implements AnnotationService {
     @Override
     public AnnotationResponse updateContent(UUID id, String content) {
         Annotation annotation = findOrThrow(id);
+        User currentUser = getCurrentUser();
+
+        if (!annotation.getAnnotator().getId().equals(currentUser.getId())) {
+            throw new BadRequestException("Only the annotator can update this annotation.");
+        }
 
         // Only allow update if REJECTED (needs rework)
         if (annotation.getStatus() != AnnotationStatus.REJECTED) {
@@ -155,5 +164,14 @@ public class AnnotationServiceImpl implements AnnotationService {
     private Annotation findOrThrow(UUID id) {
         return annotationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Annotation not found with id: " + id));
+    }
+
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            throw new BadRequestException("Unauthorized.");
+        }
+        return userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new BadRequestException("Invalid token or user not found."));
     }
 }

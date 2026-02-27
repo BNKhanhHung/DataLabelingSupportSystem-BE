@@ -1,13 +1,14 @@
 package com.anotation.project;
 
+import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,14 +24,22 @@ public class ProjectController {
 
     @GetMapping
     @Operation(summary = "Get all projects")
-    public ResponseEntity<List<ProjectResponse>> getAll() {
-        return ResponseEntity.ok(projectService.getAll()); // 200
+    public ResponseEntity<PageResponse<ProjectResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(projectService.getAll(pageable)); // 200
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get project by ID")
     public ResponseEntity<ProjectResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(projectService.getById(id)); // 200
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Search projects by name")
+    public ResponseEntity<PageResponse<ProjectResponse>> search(
+            @RequestParam(required = false) String name,
+            Pageable pageable) {
+        return ResponseEntity.ok(projectService.searchByName(name, pageable)); // 200
     }
 
     @PostMapping

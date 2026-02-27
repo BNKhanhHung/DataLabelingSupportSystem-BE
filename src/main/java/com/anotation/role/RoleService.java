@@ -1,10 +1,12 @@
 package com.anotation.role;
 
-import java.util.List;
+import com.anotation.common.PageResponse;
+import org.springframework.data.domain.Pageable;
+
 import java.util.UUID;
 
 public interface RoleService {
-    List<RoleResponse> getAll();
+    PageResponse<RoleResponse> getAll(Pageable pageable);
 
     RoleResponse getById(UUID id);
 

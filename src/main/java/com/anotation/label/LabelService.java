@@ -1,14 +1,16 @@
 package com.anotation.label;
 
-import java.util.List;
+import com.anotation.common.PageResponse;
+import org.springframework.data.domain.Pageable;
+
 import java.util.UUID;
 
 public interface LabelService {
-    List<LabelResponse> getAll();
+    PageResponse<LabelResponse> getAll(Pageable pageable);
 
     LabelResponse getById(UUID id);
 
-    List<LabelResponse> getByProject(UUID projectId);
+    PageResponse<LabelResponse> getByProject(UUID projectId, Pageable pageable);
 
     LabelResponse create(LabelRequest request);
 

@@ -1,13 +1,14 @@
 package com.anotation.dataset;
 
+import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,8 +24,8 @@ public class DatasetController {
 
     @GetMapping
     @Operation(summary = "Get all datasets")
-    public ResponseEntity<List<DatasetResponse>> getAll() {
-        return ResponseEntity.ok(datasetService.getAll()); // 200
+    public ResponseEntity<PageResponse<DatasetResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(datasetService.getAll(pageable)); // 200
     }
 
     @GetMapping("/{id}")
@@ -35,8 +36,10 @@ public class DatasetController {
 
     @GetMapping("/project/{projectId}")
     @Operation(summary = "Get all datasets in a project")
-    public ResponseEntity<List<DatasetResponse>> getByProject(@PathVariable UUID projectId) {
-        return ResponseEntity.ok(datasetService.getByProject(projectId)); // 200
+    public ResponseEntity<PageResponse<DatasetResponse>> getByProject(
+            @PathVariable UUID projectId,
+            Pageable pageable) {
+        return ResponseEntity.ok(datasetService.getByProject(projectId, pageable)); // 200
     }
 
     @PostMapping

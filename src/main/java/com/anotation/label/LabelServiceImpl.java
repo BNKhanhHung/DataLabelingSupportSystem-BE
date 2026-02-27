@@ -1,13 +1,14 @@
 package com.anotation.label;
 
+import com.anotation.common.PageResponse;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
 import com.anotation.project.Project;
 import com.anotation.project.ProjectRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -28,10 +29,8 @@ public class LabelServiceImpl implements LabelService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<LabelResponse> getAll() {
-        return labelRepository.findAll().stream()
-                .map(labelMapper::toResponse)
-                .toList();
+    public PageResponse<LabelResponse> getAll(Pageable pageable) {
+        return PageResponse.from(labelRepository.findAll(pageable), labelMapper::toResponse);
     }
 
     @Override
@@ -42,10 +41,9 @@ public class LabelServiceImpl implements LabelService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<LabelResponse> getByProject(UUID projectId) {
-        return labelRepository.findByProjectId(projectId).stream()
-                .map(labelMapper::toResponse)
-                .toList();
+    public PageResponse<LabelResponse> getByProject(UUID projectId, Pageable pageable) {
+        return PageResponse.from(labelRepository.findByProjectId(projectId, pageable),
+                labelMapper::toResponse);
     }
 
     @Override

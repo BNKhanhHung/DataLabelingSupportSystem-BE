@@ -1,13 +1,15 @@
 package com.anotation.user;
 
+import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 // ============================================================
@@ -51,14 +53,20 @@ public class UserController {
 
     @GetMapping
     @Operation(summary = "Get all users")
-    public ResponseEntity<List<UserResponse>> getAll() {
-        return ResponseEntity.ok(userService.getAll()); // 200
+    public ResponseEntity<PageResponse<UserResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(userService.getAll(pageable)); // 200
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID")
     public ResponseEntity<UserResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getById(id)); // 200
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Get current user profile")
+    public ResponseEntity<UserResponse> getMe(Authentication authentication) {
+        return ResponseEntity.ok(userService.getCurrentUser(authentication.getName()));
     }
 
     @PostMapping
@@ -74,6 +82,15 @@ public class UserController {
             @PathVariable UUID id,
             @Valid @RequestBody UserCreateRequest request) {
         return ResponseEntity.ok(userService.update(id, request)); // 200
+    }
+
+    @PatchMapping("/me/password")
+    @Operation(summary = "Change current user's password")
+    public ResponseEntity<Void> changePassword(
+            Authentication authentication,
+            @Valid @RequestBody PasswordChangeRequest request) {
+        userService.changePassword(authentication.getName(), request);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")

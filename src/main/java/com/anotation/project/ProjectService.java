@@ -1,10 +1,14 @@
 package com.anotation.project;
 
-import java.util.List;
+import com.anotation.common.PageResponse;
+import org.springframework.data.domain.Pageable;
+
 import java.util.UUID;
 
 public interface ProjectService {
-    List<ProjectResponse> getAll();
+    PageResponse<ProjectResponse> getAll(Pageable pageable);
+
+    PageResponse<ProjectResponse> searchByName(String name, Pageable pageable);
 
     ProjectResponse getById(UUID id);
 

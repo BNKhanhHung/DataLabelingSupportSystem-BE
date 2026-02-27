@@ -1,9 +1,10 @@
 package com.anotation.dataitem;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -13,11 +14,11 @@ public interface DataItemRepository extends JpaRepository<DataItem, UUID> {
     boolean existsByContentUrlAndDatasetId(String contentUrl, UUID datasetId);
 
     // Get all items in a dataset
-    List<DataItem> findByDatasetId(UUID datasetId);
+    Page<DataItem> findByDatasetId(UUID datasetId, Pageable pageable);
 
     // Get items by status
-    List<DataItem> findByStatus(DataItemStatus status);
+    Page<DataItem> findByStatus(DataItemStatus status, Pageable pageable);
 
     // Get items by dataset and status
-    List<DataItem> findByDatasetIdAndStatus(UUID datasetId, DataItemStatus status);
+    Page<DataItem> findByDatasetIdAndStatus(UUID datasetId, DataItemStatus status, Pageable pageable);
 }

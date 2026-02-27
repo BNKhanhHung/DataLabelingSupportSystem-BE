@@ -1,13 +1,14 @@
 package com.anotation.dataset;
 
+import com.anotation.common.PageResponse;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
 import com.anotation.project.Project;
 import com.anotation.project.ProjectRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -28,11 +29,8 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DatasetResponse> getAll() {
-        return datasetRepository.findAll()
-                .stream()
-                .map(datasetMapper::toResponse)
-                .toList();
+    public PageResponse<DatasetResponse> getAll(Pageable pageable) {
+        return PageResponse.from(datasetRepository.findAll(pageable), datasetMapper::toResponse);
     }
 
     @Override
@@ -43,11 +41,9 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DatasetResponse> getByProject(UUID projectId) {
-        return datasetRepository.findByProjectId(projectId)
-                .stream()
-                .map(datasetMapper::toResponse)
-                .toList();
+    public PageResponse<DatasetResponse> getByProject(UUID projectId, Pageable pageable) {
+        return PageResponse.from(datasetRepository.findByProjectId(projectId, pageable),
+                datasetMapper::toResponse);
     }
 
     @Override

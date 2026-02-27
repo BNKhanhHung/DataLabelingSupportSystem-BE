@@ -1,11 +1,12 @@
 package com.anotation.reviewfeedback;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -22,8 +23,8 @@ public interface ReviewFeedbackRepository extends JpaRepository<ReviewFeedback, 
             SELECT rf FROM ReviewFeedback rf
             WHERE rf.annotation.taskItem.task.id = :taskId
             """)
-    List<ReviewFeedback> findByTaskId(@Param("taskId") UUID taskId);
+    Page<ReviewFeedback> findByTaskId(@Param("taskId") UUID taskId, Pageable pageable);
 
     // Get all reviews done by reviewer
-    List<ReviewFeedback> findByReviewerId(UUID reviewerId);
+    Page<ReviewFeedback> findByReviewerId(UUID reviewerId, Pageable pageable);
 }

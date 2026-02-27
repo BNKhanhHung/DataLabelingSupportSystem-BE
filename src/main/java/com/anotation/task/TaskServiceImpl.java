@@ -1,5 +1,6 @@
 package com.anotation.task;
 
+import com.anotation.common.PageResponse;
 import com.anotation.exception.BadRequestException;
 import com.anotation.exception.NotFoundException;
 import com.anotation.dataitem.DataItem;
@@ -9,7 +10,11 @@ import com.anotation.project.Project;
 import com.anotation.project.ProjectRepository;
 import com.anotation.user.User;
 import com.anotation.user.UserRepository;
+import com.anotation.user.SystemRole;
 import com.anotation.userrole.UserRoleRepository;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,10 +54,8 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TaskResponse> getAll() {
-        return taskRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<TaskResponse> getAll(Pageable pageable) {
+        return PageResponse.from(taskRepository.findAll(pageable), this::toResponse);
     }
 
     @Override
@@ -63,24 +66,35 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TaskResponse> getByProject(UUID projectId) {
-        return taskRepository.findByProjectId(projectId).stream()
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<TaskResponse> getByProject(UUID projectId, Pageable pageable) {
+        return PageResponse.from(taskRepository.findByProjectId(projectId, pageable),
+                this::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<TaskResponse> getByAnnotator(UUID annotatorId) {
-        return taskRepository.findByAnnotatorId(annotatorId).stream()
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<TaskResponse> getByAnnotator(UUID annotatorId, Pageable pageable) {
+        return PageResponse.from(taskRepository.findByAnnotatorId(annotatorId, pageable),
+                this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<TaskResponse> search(String name, TaskStatus status, Pageable pageable) {
+        return PageResponse.from(taskRepository.search(name, status, pageable), this::toResponse);
     }
 
     // ── Create ───────────────────────────────────────────────────────────────────
 
     @Override
     public TaskResponse create(TaskRequest request) {
+        User currentUser = getCurrentUser();
+        boolean isAdmin = currentUser.getSystemRole() == SystemRole.ADMIN;
+        if (!isAdmin && !userRoleRepository.existsByUserIdAndRoleNameIgnoreCase(
+                currentUser.getId(), "Manager")) {
+            throw new BadRequestException("Only Manager can create tasks.");
+        }
+
         UUID projectId = request.getProjectId();
         UUID annotatorId = request.getAnnotatorId();
         UUID reviewerId = request.getReviewerId();
@@ -195,5 +209,14 @@ public class TaskServiceImpl implements TaskService {
                 .map(ti -> ti.getDataItem().getId())
                 .toList();
         return taskMapper.toResponse(task, dataItemIds);
+    }
+
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            throw new BadRequestException("Unauthorized.");
+        }
+        return userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new BadRequestException("Invalid token or user not found."));
     }
 }
