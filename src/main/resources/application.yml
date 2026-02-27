@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres
-    username: postgres.wqillyzrmdbjvxfnckhx
-    password: SofwareDevelopemnt
+    url: ${SUPABASE_DB_URL:jdbc:postgresql://aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require}
+    username: ${SUPABASE_DB_USERNAME:postgres.wqillyzrmdbjvxfnckhx}
+    password: ${SUPABASE_DB_PASSWORD:SofwareDevelopemnt}
     driver-class-name: org.postgresql.Driver
   servlet:
     multipart:
@@ -30,7 +30,7 @@ jwt:
   expiration-ms: ${JWT_EXPIRATION:86400000}   # 24 hours
 
 supabase:
-  url: ${SUPABASE_URL}
-  service-key: ${SUPABASE_SERVICE_KEY}
+  url: ${SUPABASE_URL:https://placeholder.supabase.co}
+  service-key: ${SUPABASE_SERVICE_KEY:placeholder-key-for-local-test}
   storage:
     bucket: ${SUPABASE_STORAGE_BUCKET:data-items}
