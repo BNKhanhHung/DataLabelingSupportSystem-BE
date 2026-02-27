@@ -1,8 +1,11 @@
 target/
 *.log
 .env
+.env.local
 *.env
 *.env.*
+!*.env.example
+application-local.yml
 .idea/
 .vscode/
 .DS_Store

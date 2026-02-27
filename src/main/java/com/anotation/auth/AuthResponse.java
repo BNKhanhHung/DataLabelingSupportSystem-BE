@@ -9,12 +9,14 @@ public class AuthResponse {
     private UUID userId;
     private String username;
     private String email;
+    private String systemRole;
 
-    public AuthResponse(String token, UUID userId, String username, String email) {
+    public AuthResponse(String token, UUID userId, String username, String email, String systemRole) {
         this.token = token;
         this.userId = userId;
         this.username = username;
         this.email = email;
+        this.systemRole = systemRole;
     }
 
     public String getToken() {
@@ -35,5 +37,13 @@ public class AuthResponse {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getSystemRole() {
+        return systemRole;
+    }
+
+    public void setSystemRole(String systemRole) {
+        this.systemRole = systemRole;
     }
 }
