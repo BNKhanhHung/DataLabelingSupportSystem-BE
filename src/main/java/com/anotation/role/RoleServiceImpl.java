@@ -3,7 +3,10 @@ package com.anotation.role;
 import com.anotation.common.PageResponse;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +27,13 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<RoleResponse> getAll(Pageable pageable) {
-        return PageResponse.from(roleRepository.findAll(pageable), roleMapper::toResponse);
+        try {
+            return PageResponse.from(roleRepository.findAll(pageable), roleMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            // Sort property không tồn tại (vd: sort=string) → dùng mặc định sort theo id
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(roleRepository.findAll(safe), roleMapper::toResponse);
+        }
     }
 
     @Override

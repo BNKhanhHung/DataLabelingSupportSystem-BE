@@ -4,6 +4,7 @@ import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +24,9 @@ public class TaskController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all tasks")
-    public ResponseEntity<PageResponse<TaskResponse>> getAll(Pageable pageable) {
+    @Operation(summary = "Get all tasks",
+            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    public ResponseEntity<PageResponse<TaskResponse>> getAll(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(taskService.getAll(pageable)); // 200
     }
 
@@ -35,27 +37,30 @@ public class TaskController {
     }
 
     @GetMapping("/project/{projectId}")
-    @Operation(summary = "Get all tasks in a project")
+    @Operation(summary = "Get all tasks in a project",
+            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<TaskResponse>> getByProject(
             @PathVariable UUID projectId,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(taskService.getByProject(projectId, pageable)); // 200
     }
 
     @GetMapping("/annotator/{annotatorId}")
-    @Operation(summary = "Get all tasks assigned to an annotator")
+    @Operation(summary = "Get all tasks assigned to an annotator",
+            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<TaskResponse>> getByAnnotator(
             @PathVariable UUID annotatorId,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(taskService.getByAnnotator(annotatorId, pageable)); // 200
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Search tasks by project name and status")
+    @Operation(summary = "Search tasks by project name and status",
+            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<TaskResponse>> search(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) TaskStatus status,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(taskService.search(name, status, pageable)); // 200
     }
 

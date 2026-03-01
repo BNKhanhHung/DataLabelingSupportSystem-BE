@@ -20,11 +20,9 @@ import java.util.List;
 /**
  * Security Configuration — Authorization Rules
  *
- * Business rules:
- * - ADMIN : quản lý users & roles (system-level) — KHÔNG có quyền Manager
- * - Manager: quản lý project resources (project-level role via UserRole table)
- * - Annotator: chỉ annotate task được gán (checked in AnnotationServiceImpl)
- * - Reviewer: chỉ review task được gán (checked in ReviewFeedbackServiceImpl)
+ * - ADMIN & MANAGER : full access (users, roles, projects, tasks, data items, etc.)
+ * - USER : authenticated; project-level permissions via UserRole (Annotator/Reviewer)
+ *   enforced in Service layer (AnnotationServiceImpl, ReviewFeedbackServiceImpl, etc.)
  */
 @Configuration
 @EnableWebSecurity
@@ -47,6 +45,7 @@ public class SecurityConfig {
                         // ── Public endpoints ─────────────────────────────────────
                         .requestMatchers(
                                 "/api/auth/login",
+                                "/api/auth/register",
                                 "/swagger",
                                 "/swagger-ui/**",
                                 "/api-docs/**",
@@ -56,9 +55,9 @@ public class SecurityConfig {
                         // ── Current user endpoints — authenticated ──────────────
                         .requestMatchers("/api/users/me/**").authenticated()
 
-                        // ── ADMIN only — quản lý users ───────────────────────────
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        // ── Roles — cho phép user đã đăng nhập ───────────────────
+                        // ── ADMIN & MANAGER — quản lý users và toàn bộ APIs ──────
+                        .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MANAGER")
+                        // ── Roles, projects, tasks, etc. — authenticated ──────────
                         .requestMatchers("/api/roles/**").authenticated()
 
                         // ── All other endpoints — authenticated users ────────────

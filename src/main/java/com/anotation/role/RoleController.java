@@ -4,6 +4,7 @@ import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +24,9 @@ public class RoleController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all roles")
-    public ResponseEntity<PageResponse<RoleResponse>> getAll(Pageable pageable) {
+    @Operation(summary = "Get all roles",
+            description = "Dùng page, size, sort. Sort hợp lệ: id, name, description (ví dụ: sort=id,asc). Tránh sort=string.")
+    public ResponseEntity<PageResponse<RoleResponse>> getAll(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(roleService.getAll(pageable)); // 200
     }
 

@@ -3,7 +3,10 @@ package com.anotation.project;
 import com.anotation.common.PageResponse;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +27,12 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ProjectResponse> getAll(Pageable pageable) {
-        return PageResponse.from(projectRepository.findAll(pageable), projectMapper::toResponse);
+        try {
+            return PageResponse.from(projectRepository.findAll(pageable), projectMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(projectRepository.findAll(safe), projectMapper::toResponse);
+        }
     }
 
     @Override
@@ -33,8 +41,14 @@ public class ProjectServiceImpl implements ProjectService {
         if (name == null || name.isBlank()) {
             return getAll(pageable);
         }
-        return PageResponse.from(projectRepository.findByNameContainingIgnoreCase(name, pageable),
-                projectMapper::toResponse);
+        try {
+            return PageResponse.from(projectRepository.findByNameContainingIgnoreCase(name, pageable),
+                    projectMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(projectRepository.findByNameContainingIgnoreCase(name, safe),
+                    projectMapper::toResponse);
+        }
     }
 
     @Override

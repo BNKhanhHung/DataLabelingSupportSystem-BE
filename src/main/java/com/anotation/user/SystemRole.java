@@ -5,9 +5,11 @@ package com.anotation.user;
  *
  * - USER : default role, can be assigned project roles
  * (Manager/Annotator/Reviewer)
+ * - MANAGER : project/resource manager
  * - ADMIN : manages users & roles only (NOT project resources)
  */
 public enum SystemRole {
     USER,
+    MANAGER,
     ADMIN
 }

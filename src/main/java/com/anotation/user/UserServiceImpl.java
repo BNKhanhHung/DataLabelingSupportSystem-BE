@@ -4,7 +4,10 @@ import com.anotation.common.PageResponse;
 import com.anotation.exception.BadRequestException;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +37,12 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<UserResponse> getAll(Pageable pageable) {
-        return PageResponse.from(userRepository.findAll(pageable), userMapper::toResponse);
+        try {
+            return PageResponse.from(userRepository.findAll(pageable), userMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(userRepository.findAll(safe), userMapper::toResponse);
+        }
     }
 
     @Override

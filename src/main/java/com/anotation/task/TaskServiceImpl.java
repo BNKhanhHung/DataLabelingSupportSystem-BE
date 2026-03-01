@@ -12,7 +12,10 @@ import com.anotation.user.User;
 import com.anotation.user.UserRepository;
 import com.anotation.user.SystemRole;
 import com.anotation.userrole.UserRoleRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -52,10 +55,18 @@ public class TaskServiceImpl implements TaskService {
 
     // ── Read operations ──────────────────────────────────────────────────────────
 
+    private static Pageable safePageable(Pageable pageable) {
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+    }
+
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getAll(Pageable pageable) {
-        return PageResponse.from(taskRepository.findAll(pageable), this::toResponse);
+        try {
+            return PageResponse.from(taskRepository.findAll(pageable), this::toResponse);
+        } catch (PropertyReferenceException e) {
+            return PageResponse.from(taskRepository.findAll(safePageable(pageable)), this::toResponse);
+        }
     }
 
     @Override
@@ -67,21 +78,36 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getByProject(UUID projectId, Pageable pageable) {
-        return PageResponse.from(taskRepository.findByProjectId(projectId, pageable),
-                this::toResponse);
+        try {
+            return PageResponse.from(taskRepository.findByProjectId(projectId, pageable),
+                    this::toResponse);
+        } catch (PropertyReferenceException e) {
+            return PageResponse.from(taskRepository.findByProjectId(projectId, safePageable(pageable)),
+                    this::toResponse);
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getByAnnotator(UUID annotatorId, Pageable pageable) {
-        return PageResponse.from(taskRepository.findByAnnotatorId(annotatorId, pageable),
-                this::toResponse);
+        try {
+            return PageResponse.from(taskRepository.findByAnnotatorId(annotatorId, pageable),
+                    this::toResponse);
+        } catch (PropertyReferenceException e) {
+            return PageResponse.from(taskRepository.findByAnnotatorId(annotatorId, safePageable(pageable)),
+                    this::toResponse);
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> search(String name, TaskStatus status, Pageable pageable) {
-        return PageResponse.from(taskRepository.search(name, status, pageable), this::toResponse);
+        try {
+            return PageResponse.from(taskRepository.search(name, status, pageable), this::toResponse);
+        } catch (PropertyReferenceException e) {
+            return PageResponse.from(taskRepository.search(name, status, safePageable(pageable)),
+                    this::toResponse);
+        }
     }
 
     // ── Create ───────────────────────────────────────────────────────────────────
