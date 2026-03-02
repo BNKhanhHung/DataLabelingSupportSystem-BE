@@ -48,8 +48,8 @@ public class SecurityConfig {
                         .permitAll()
 
                         // ── ADMIN only — quản lý users & roles ───────────────────
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/roles/**").hasRole("ADMIN")
+//                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+//                        .requestMatchers("/api/roles/**").hasRole("ADMIN")
 
                         // ── All other endpoints — authenticated users ────────────
                         // Project-level authorization (Manager/Annotator/Reviewer)

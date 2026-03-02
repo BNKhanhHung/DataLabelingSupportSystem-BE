@@ -9,5 +9,6 @@ package com.anotation.user;
  */
 public enum SystemRole {
     USER,
-    ADMIN
+    ADMIN,
+    MANAGER
 }

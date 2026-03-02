@@ -3,10 +3,14 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/annotation_db
-    username: postgres
-    password: 12345
+    url: ${SUPABASE_DB_URL:jdbc:postgresql://aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require}
+    username: ${SUPABASE_DB_USERNAME:postgres.wqillyzrmdbjvxfnckhx}
+    password: ${SUPABASE_DB_PASSWORD:SofwareDevelopemnt}
     driver-class-name: org.postgresql.Driver
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:10MB}
   jpa:
     hibernate:
       ddl-auto: update
@@ -24,3 +28,9 @@ springdoc:
 jwt:
   secret: ${JWT_SECRET:MyDefaultSuperSecretKeyThatIsAtLeast256BitsLong!!}
   expiration-ms: ${JWT_EXPIRATION:86400000}   # 24 hours
+
+supabase:
+  url: ${SUPABASE_URL:https://placeholder.supabase.co}
+  service-key: ${SUPABASE_SERVICE_KEY:placeholder-key-for-local-test}
+  storage:
+    bucket: ${SUPABASE_STORAGE_BUCKET:data-items}
