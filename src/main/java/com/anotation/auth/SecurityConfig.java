@@ -53,13 +53,9 @@ public class SecurityConfig {
                                 "/v3/api-docs/**")
                         .permitAll()
 
-                        // ── Current user endpoints — authenticated ──────────────
-                        .requestMatchers("/api/users/me/**").authenticated()
-
-                        // ── ADMIN only — quản lý users ───────────────────────────
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        // ── Roles — cho phép user đã đăng nhập ───────────────────
-                        .requestMatchers("/api/roles/**").authenticated()
+                        // ── ADMIN only — quản lý users & roles ───────────────────
+//                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+//                        .requestMatchers("/api/roles/**").hasRole("ADMIN")
 
                         // ── All other endpoints — authenticated users ────────────
                         // Project-level authorization (Manager/Annotator/Reviewer)

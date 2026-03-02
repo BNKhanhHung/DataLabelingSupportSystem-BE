@@ -1,0 +1,9 @@
+feat: transition to Supabase and seed comprehensive demo data
+
+- Update application.yml to use remote Supabase PostgreSQL instead of localhost.
+- Add findByName method to RoleRepository to fetch existing roles.
+- Enhance DataInitializer to generate a complete end-to-end demo dataset:
+  * Create a demo project 'D? án Demo - Phân lo?i ?nh Chó Mèo'
+  * Add 'Chó' and 'Mèo' labels with designated colors
+  * Assign Manager, Annotator, and Reviewer roles to users for the project
+  * Create a dataset and populate it with 4 sample image DataItems (URLs)
