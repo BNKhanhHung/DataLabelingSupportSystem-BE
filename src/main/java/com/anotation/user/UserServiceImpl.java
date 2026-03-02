@@ -1,12 +1,14 @@
 package com.anotation.user;
 
+import com.anotation.common.PageResponse;
+import com.anotation.exception.BadRequestException;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -31,17 +33,35 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserResponse> getAll() {
-        return userRepository.findAll()
-                .stream()
-                .map(userMapper::toResponse)
-                .toList();
+    public PageResponse<UserResponse> getAll(Pageable pageable) {
+        return PageResponse.from(userRepository.findAll(pageable), userMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public UserResponse getById(UUID id) {
         return userMapper.toResponse(findOrThrow(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getCurrentUser(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BadRequestException("Invalid token or user not found."));
+        return userMapper.toResponse(user);
+    }
+
+    @Override
+    public void changePassword(String username, PasswordChangeRequest request) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BadRequestException("Invalid token or user not found."));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Old password is incorrect.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 
     @Override

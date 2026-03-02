@@ -1,6 +1,7 @@
 package com.anotation.role;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.UuidGenerator;
 import java.util.UUID;
 
 @Entity
@@ -8,6 +9,8 @@ import java.util.UUID;
 public class Role {
 
     @Id
+    @GeneratedValue
+    @UuidGenerator
     private UUID id;
 
     @Column(nullable = false, unique = true)
@@ -15,13 +18,6 @@ public class Role {
 
     @Column
     private String description;
-
-    @PrePersist
-    public void onCreate() {
-        if (id == null) {
-            id = UUID.randomUUID();
-        }
-    }
 
     public UUID getId() {
         return id;

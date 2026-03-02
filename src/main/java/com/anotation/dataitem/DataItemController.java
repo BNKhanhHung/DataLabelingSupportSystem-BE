@@ -1,13 +1,16 @@
 package com.anotation.dataitem;
 
+import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,8 +26,8 @@ public class DataItemController {
 
     @GetMapping
     @Operation(summary = "Get all data items")
-    public ResponseEntity<List<DataItemResponse>> getAll() {
-        return ResponseEntity.ok(dataItemService.getAll()); // 200
+    public ResponseEntity<PageResponse<DataItemResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(dataItemService.getAll(pageable)); // 200
     }
 
     @GetMapping("/{id}")
@@ -35,16 +38,19 @@ public class DataItemController {
 
     @GetMapping("/dataset/{datasetId}")
     @Operation(summary = "Get all items in a dataset")
-    public ResponseEntity<List<DataItemResponse>> getByDataset(@PathVariable UUID datasetId) {
-        return ResponseEntity.ok(dataItemService.getByDataset(datasetId)); // 200
+    public ResponseEntity<PageResponse<DataItemResponse>> getByDataset(
+            @PathVariable UUID datasetId,
+            Pageable pageable) {
+        return ResponseEntity.ok(dataItemService.getByDataset(datasetId, pageable)); // 200
     }
 
     @GetMapping("/dataset/{datasetId}/status/{status}")
     @Operation(summary = "Get items in a dataset filtered by status")
-    public ResponseEntity<List<DataItemResponse>> getByDatasetAndStatus(
+    public ResponseEntity<PageResponse<DataItemResponse>> getByDatasetAndStatus(
             @PathVariable UUID datasetId,
-            @PathVariable DataItemStatus status) {
-        return ResponseEntity.ok(dataItemService.getByDatasetAndStatus(datasetId, status)); // 200
+            @PathVariable DataItemStatus status,
+            Pageable pageable) {
+        return ResponseEntity.ok(dataItemService.getByDatasetAndStatus(datasetId, status, pageable)); // 200
     }
 
     @PostMapping
@@ -52,6 +58,16 @@ public class DataItemController {
     public ResponseEntity<DataItemResponse> create(@Valid @RequestBody DataItemRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(dataItemService.create(request)); // 201
+    }
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload a file and create a data item")
+    public ResponseEntity<DataItemResponse> upload(
+            @RequestParam UUID datasetId,
+            @RequestParam MultipartFile file,
+            @RequestParam(required = false) String metadata) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(dataItemService.upload(datasetId, file, metadata)); // 201
     }
 
     @PatchMapping("/{id}/status")

@@ -17,10 +17,6 @@ public class UserRoleMapper {
         response.setRoleId(userRole.getRole().getId());
         response.setRoleName(userRole.getRole().getName());
 
-        // Flatten Project info
-        response.setProjectId(userRole.getProject().getId());
-        response.setProjectName(userRole.getProject().getName());
-
         response.setAssignedAt(userRole.getAssignedAt());
         return response;
     }

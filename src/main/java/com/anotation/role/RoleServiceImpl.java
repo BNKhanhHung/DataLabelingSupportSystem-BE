@@ -1,11 +1,12 @@
 package com.anotation.role;
 
+import com.anotation.common.PageResponse;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -22,11 +23,8 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RoleResponse> getAll() {
-        return roleRepository.findAll()
-                .stream()
-                .map(roleMapper::toResponse)
-                .toList();
+    public PageResponse<RoleResponse> getAll(Pageable pageable) {
+        return PageResponse.from(roleRepository.findAll(pageable), roleMapper::toResponse);
     }
 
     @Override

@@ -1,14 +1,16 @@
 package com.anotation.dataset;
 
-import java.util.List;
+import com.anotation.common.PageResponse;
+import org.springframework.data.domain.Pageable;
+
 import java.util.UUID;
 
 public interface DatasetService {
-    List<DatasetResponse> getAll();
+    PageResponse<DatasetResponse> getAll(Pageable pageable);
 
     DatasetResponse getById(UUID id);
 
-    List<DatasetResponse> getByProject(UUID projectId);
+    PageResponse<DatasetResponse> getByProject(UUID projectId, Pageable pageable);
 
     DatasetResponse create(DatasetRequest request);
 

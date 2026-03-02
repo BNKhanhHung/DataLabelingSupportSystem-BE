@@ -1,9 +1,9 @@
 package com.anotation.userrole;
 
-import com.anotation.project.Project;
 import com.anotation.role.Role;
 import com.anotation.user.User;
 import jakarta.persistence.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -38,11 +38,13 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "user_roles", schema = "public", uniqueConstraints = {
-        @UniqueConstraint(name = "uq_user_role_project", columnNames = { "user_id", "role_id", "project_id" })
+        @UniqueConstraint(name = "uq_user_role", columnNames = { "user_id", "role_id" })
 })
 public class UserRole {
 
     @Id
+    @GeneratedValue
+    @UuidGenerator
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -53,18 +55,11 @@ public class UserRole {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "project_id", nullable = false)
-    private Project project;
-
     @Column(name = "assigned_at", nullable = false, updatable = false)
     private LocalDateTime assignedAt;
 
     @PrePersist
     public void onCreate() {
-        if (id == null) {
-            id = UUID.randomUUID();
-        }
         assignedAt = LocalDateTime.now();
     }
 
@@ -87,14 +82,6 @@ public class UserRole {
 
     public void setRole(Role role) {
         this.role = role;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
     }
 
     public LocalDateTime getAssignedAt() {

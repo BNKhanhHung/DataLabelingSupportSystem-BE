@@ -1,11 +1,12 @@
 package com.anotation.project;
 
+import com.anotation.common.PageResponse;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -22,11 +23,18 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProjectResponse> getAll() {
-        return projectRepository.findAll()
-                .stream()
-                .map(projectMapper::toResponse)
-                .toList();
+    public PageResponse<ProjectResponse> getAll(Pageable pageable) {
+        return PageResponse.from(projectRepository.findAll(pageable), projectMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ProjectResponse> searchByName(String name, Pageable pageable) {
+        if (name == null || name.isBlank()) {
+            return getAll(pageable);
+        }
+        return PageResponse.from(projectRepository.findByNameContainingIgnoreCase(name, pageable),
+                projectMapper::toResponse);
     }
 
     @Override

@@ -1,13 +1,14 @@
 package com.anotation.role;
 
+import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,8 +24,8 @@ public class RoleController {
 
     @GetMapping
     @Operation(summary = "Get all roles")
-    public ResponseEntity<List<RoleResponse>> getAll() {
-        return ResponseEntity.ok(roleService.getAll()); // 200
+    public ResponseEntity<PageResponse<RoleResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(roleService.getAll(pageable)); // 200
     }
 
     @GetMapping("/{id}")

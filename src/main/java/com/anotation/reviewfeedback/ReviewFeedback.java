@@ -3,6 +3,7 @@ package com.anotation.reviewfeedback;
 import com.anotation.annotation.Annotation;
 import com.anotation.user.User;
 import jakarta.persistence.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -14,6 +15,8 @@ import java.util.UUID;
 public class ReviewFeedback {
 
     @Id
+    @GeneratedValue
+    @UuidGenerator
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
@@ -36,8 +39,6 @@ public class ReviewFeedback {
 
     @PrePersist
     public void onCreate() {
-        if (id == null)
-            id = UUID.randomUUID();
         createdAt = LocalDateTime.now();
     }
 

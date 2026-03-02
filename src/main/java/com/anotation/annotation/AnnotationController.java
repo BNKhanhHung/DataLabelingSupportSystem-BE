@@ -1,13 +1,14 @@
 package com.anotation.annotation;
 
+import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,8 +24,8 @@ public class AnnotationController {
 
     @GetMapping
     @Operation(summary = "Get all annotations")
-    public ResponseEntity<List<AnnotationResponse>> getAll() {
-        return ResponseEntity.ok(annotationService.getAll()); // 200
+    public ResponseEntity<PageResponse<AnnotationResponse>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(annotationService.getAll(pageable)); // 200
     }
 
     @GetMapping("/{id}")
@@ -35,8 +36,10 @@ public class AnnotationController {
 
     @GetMapping("/task/{taskId}")
     @Operation(summary = "Get all annotations in a task")
-    public ResponseEntity<List<AnnotationResponse>> getByTask(@PathVariable UUID taskId) {
-        return ResponseEntity.ok(annotationService.getByTask(taskId)); // 200
+    public ResponseEntity<PageResponse<AnnotationResponse>> getByTask(
+            @PathVariable UUID taskId,
+            Pageable pageable) {
+        return ResponseEntity.ok(annotationService.getByTask(taskId, pageable)); // 200
     }
 
     @PostMapping

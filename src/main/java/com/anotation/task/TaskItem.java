@@ -2,6 +2,7 @@ package com.anotation.task;
 
 import com.anotation.dataitem.DataItem;
 import jakarta.persistence.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
 
@@ -12,6 +13,8 @@ import java.util.UUID;
 public class TaskItem {
 
     @Id
+    @GeneratedValue
+    @UuidGenerator
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -21,12 +24,6 @@ public class TaskItem {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "data_item_id", nullable = false)
     private DataItem dataItem;
-
-    @PrePersist
-    public void onCreate() {
-        if (id == null)
-            id = UUID.randomUUID();
-    }
 
     public UUID getId() {
         return id;

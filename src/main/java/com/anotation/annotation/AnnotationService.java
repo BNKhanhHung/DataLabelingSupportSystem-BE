@@ -1,14 +1,16 @@
 package com.anotation.annotation;
 
-import java.util.List;
+import com.anotation.common.PageResponse;
+import org.springframework.data.domain.Pageable;
+
 import java.util.UUID;
 
 public interface AnnotationService {
-    List<AnnotationResponse> getAll();
+    PageResponse<AnnotationResponse> getAll(Pageable pageable);
 
     AnnotationResponse getById(UUID id);
 
-    List<AnnotationResponse> getByTask(UUID taskId);
+    PageResponse<AnnotationResponse> getByTask(UUID taskId, Pageable pageable);
 
     AnnotationResponse submit(AnnotationRequest request);
 

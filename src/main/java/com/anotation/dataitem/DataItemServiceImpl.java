@@ -1,13 +1,17 @@
 package com.anotation.dataitem;
 
+import com.anotation.common.PageResponse;
+import com.anotation.exception.BadRequestException;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
 import com.anotation.dataset.Dataset;
 import com.anotation.dataset.DatasetRepository;
+import com.anotation.storage.SupabaseStorageService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -17,22 +21,22 @@ public class DataItemServiceImpl implements DataItemService {
     private final DataItemRepository dataItemRepository;
     private final DatasetRepository datasetRepository;
     private final DataItemMapper dataItemMapper;
+    private final SupabaseStorageService storageService;
 
     public DataItemServiceImpl(DataItemRepository dataItemRepository,
             DatasetRepository datasetRepository,
-            DataItemMapper dataItemMapper) {
+            DataItemMapper dataItemMapper,
+            SupabaseStorageService storageService) {
         this.dataItemRepository = dataItemRepository;
         this.datasetRepository = datasetRepository;
         this.dataItemMapper = dataItemMapper;
+        this.storageService = storageService;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<DataItemResponse> getAll() {
-        return dataItemRepository.findAll()
-                .stream()
-                .map(dataItemMapper::toResponse)
-                .toList();
+    public PageResponse<DataItemResponse> getAll(Pageable pageable) {
+        return PageResponse.from(dataItemRepository.findAll(pageable), dataItemMapper::toResponse);
     }
 
     @Override
@@ -43,20 +47,41 @@ public class DataItemServiceImpl implements DataItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DataItemResponse> getByDataset(UUID datasetId) {
-        return dataItemRepository.findByDatasetId(datasetId)
-                .stream()
-                .map(dataItemMapper::toResponse)
-                .toList();
+    public PageResponse<DataItemResponse> getByDataset(UUID datasetId, Pageable pageable) {
+        return PageResponse.from(dataItemRepository.findByDatasetId(datasetId, pageable),
+                dataItemMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<DataItemResponse> getByDatasetAndStatus(UUID datasetId, DataItemStatus status) {
-        return dataItemRepository.findByDatasetIdAndStatus(datasetId, status)
-                .stream()
-                .map(dataItemMapper::toResponse)
-                .toList();
+    public PageResponse<DataItemResponse> getByDatasetAndStatus(
+            UUID datasetId, DataItemStatus status, Pageable pageable) {
+        return PageResponse.from(
+                dataItemRepository.findByDatasetIdAndStatus(datasetId, status, pageable),
+                dataItemMapper::toResponse);
+    }
+
+    @Override
+    public DataItemResponse upload(UUID datasetId, MultipartFile file, String metadata) {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("File is required.");
+        }
+
+        Dataset dataset = datasetRepository.findById(datasetId)
+                .orElseThrow(() -> new NotFoundException("Dataset not found: " + datasetId));
+
+        String contentUrl = storageService.upload(file, "data-items");
+
+        if (dataItemRepository.existsByContentUrlAndDatasetId(contentUrl, datasetId)) {
+            throw new DuplicateException("Data item already exists for this dataset.");
+        }
+
+        DataItem dataItem = new DataItem();
+        dataItem.setDataset(dataset);
+        dataItem.setContentUrl(contentUrl);
+        dataItem.setMetadata(metadata);
+
+        return dataItemMapper.toResponse(dataItemRepository.save(dataItem));
     }
 
     @Override

@@ -11,7 +11,10 @@ public class UserMapper {
         response.setUsername(user.getUsername());
         response.setEmail(user.getEmail());
         response.setStatus(user.getStatus());
-        response.setSystemRole(user.getSystemRole().name());
+        SystemRole systemRole = user.getSystemRole() != null
+                ? user.getSystemRole()
+                : SystemRole.USER;
+        response.setSystemRole(systemRole.name());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
         return response;

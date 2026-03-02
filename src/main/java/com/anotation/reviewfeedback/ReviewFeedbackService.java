@@ -1,16 +1,18 @@
 package com.anotation.reviewfeedback;
 
-import java.util.List;
+import com.anotation.common.PageResponse;
+import org.springframework.data.domain.Pageable;
+
 import java.util.UUID;
 
 public interface ReviewFeedbackService {
-    List<ReviewResponse> getAll();
+    PageResponse<ReviewResponse> getAll(Pageable pageable);
 
     ReviewResponse getById(UUID id);
 
-    List<ReviewResponse> getByTask(UUID taskId);
+    PageResponse<ReviewResponse> getByTask(UUID taskId, Pageable pageable);
 
-    List<ReviewResponse> getByReviewer(UUID reviewerId);
+    PageResponse<ReviewResponse> getByReviewer(UUID reviewerId, Pageable pageable);
 
     ReviewResponse review(ReviewRequest request);
 
