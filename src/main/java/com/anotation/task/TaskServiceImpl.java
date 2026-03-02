@@ -101,6 +101,18 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageResponse<TaskResponse> getByReviewer(UUID reviewerId, Pageable pageable) {
+        try {
+            return PageResponse.from(taskRepository.findByReviewerId(reviewerId, pageable),
+                    this::toResponse);
+        } catch (PropertyReferenceException e) {
+            return PageResponse.from(taskRepository.findByReviewerId(reviewerId, safePageable(pageable)),
+                    this::toResponse);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PageResponse<TaskResponse> search(String name, TaskStatus status, Pageable pageable) {
         try {
             return PageResponse.from(taskRepository.search(name, status, pageable), this::toResponse);

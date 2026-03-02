@@ -14,6 +14,8 @@ public interface TaskService {
 
     PageResponse<TaskResponse> getByAnnotator(UUID annotatorId, Pageable pageable);
 
+    PageResponse<TaskResponse> getByReviewer(UUID reviewerId, Pageable pageable);
+
     PageResponse<TaskResponse> search(String name, TaskStatus status, Pageable pageable);
 
     TaskResponse create(TaskRequest request);

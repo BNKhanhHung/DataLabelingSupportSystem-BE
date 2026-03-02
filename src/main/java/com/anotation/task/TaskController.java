@@ -54,6 +54,15 @@ public class TaskController {
         return ResponseEntity.ok(taskService.getByAnnotator(annotatorId, pageable)); // 200
     }
 
+    @GetMapping("/reviewer/{reviewerId}")
+    @Operation(summary = "Get all tasks assigned to a reviewer",
+            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    public ResponseEntity<PageResponse<TaskResponse>> getByReviewer(
+            @PathVariable UUID reviewerId,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(taskService.getByReviewer(reviewerId, pageable)); // 200
+    }
+
     @GetMapping("/search")
     @Operation(summary = "Search tasks by project name and status",
             description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
