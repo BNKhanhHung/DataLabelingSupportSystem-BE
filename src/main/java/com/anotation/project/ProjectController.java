@@ -4,6 +4,7 @@ import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +24,9 @@ public class ProjectController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all projects")
-    public ResponseEntity<PageResponse<ProjectResponse>> getAll(Pageable pageable) {
+    @Operation(summary = "Get all projects",
+            description = "Sort hợp lệ: id, name, description, createdAt (vd: sort=name,asc). Tránh sort=string.")
+    public ResponseEntity<PageResponse<ProjectResponse>> getAll(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(projectService.getAll(pageable)); // 200
     }
 
@@ -35,10 +37,11 @@ public class ProjectController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Search projects by name")
+    @Operation(summary = "Search projects by name",
+            description = "Sort hợp lệ: id, name, description, createdAt (vd: sort=name,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<ProjectResponse>> search(
             @RequestParam(required = false) String name,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(projectService.searchByName(name, pageable)); // 200
     }
 
