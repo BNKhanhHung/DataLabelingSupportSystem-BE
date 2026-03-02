@@ -88,9 +88,9 @@ public class DataInitializer implements CommandLineRunner {
         log.info("3. Đã tạo Project: " + project.getName());
 
         // 4. Phân Quyền Vô Project (UserRoles)
-        assignUserToProject(manager, rManager, project);
-        assignUserToProject(annotator1, rAnnotator, project);
-        assignUserToProject(reviewer1, rReviewer, project);
+        assignUserToProject(manager, rManager);
+        assignUserToProject(annotator1, rAnnotator);
+        assignUserToProject(reviewer1, rReviewer);
 
         log.info("4. Đã phân quyền Manager, Annotator, Reviewer vào Project");
 
@@ -153,11 +153,10 @@ public class DataInitializer implements CommandLineRunner {
         return roleRepository.save(role);
     }
 
-    private void assignUserToProject(User user, Role role, Project project) {
+    private void assignUserToProject(User user, Role role) {
         UserRole userRole = new UserRole();
         userRole.setUser(user);
         userRole.setRole(role);
-        userRole.setProject(project);
         userRoleRepository.save(userRole);
     }
 
