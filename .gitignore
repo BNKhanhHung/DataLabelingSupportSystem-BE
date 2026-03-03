@@ -10,3 +10,9 @@ application-local.yml
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Documentation files for demo
+Business_Analysis_Report.md
+Code_Explanation.md
+Demo_Guide.md
+commit_msg.txt
