@@ -4,6 +4,7 @@ import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +24,9 @@ public class DatasetController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all datasets")
-    public ResponseEntity<PageResponse<DatasetResponse>> getAll(Pageable pageable) {
+    @Operation(summary = "Get all datasets",
+            description = "Sort hợp lệ: id, name, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    public ResponseEntity<PageResponse<DatasetResponse>> getAll(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(datasetService.getAll(pageable)); // 200
     }
 
@@ -35,10 +37,11 @@ public class DatasetController {
     }
 
     @GetMapping("/project/{projectId}")
-    @Operation(summary = "Get all datasets in a project")
+    @Operation(summary = "Get all datasets in a project",
+            description = "Sort hợp lệ: id, name (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<DatasetResponse>> getByProject(
             @PathVariable UUID projectId,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(datasetService.getByProject(projectId, pageable)); // 200
     }
 

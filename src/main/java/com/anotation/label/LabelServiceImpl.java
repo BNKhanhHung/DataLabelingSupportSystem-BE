@@ -5,7 +5,10 @@ import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
 import com.anotation.project.Project;
 import com.anotation.project.ProjectRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +33,12 @@ public class LabelServiceImpl implements LabelService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<LabelResponse> getAll(Pageable pageable) {
-        return PageResponse.from(labelRepository.findAll(pageable), labelMapper::toResponse);
+        try {
+            return PageResponse.from(labelRepository.findAll(pageable), labelMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(labelRepository.findAll(safe), labelMapper::toResponse);
+        }
     }
 
     @Override
@@ -42,8 +50,14 @@ public class LabelServiceImpl implements LabelService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<LabelResponse> getByProject(UUID projectId, Pageable pageable) {
-        return PageResponse.from(labelRepository.findByProjectId(projectId, pageable),
-                labelMapper::toResponse);
+        try {
+            return PageResponse.from(labelRepository.findByProjectId(projectId, pageable),
+                    labelMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(labelRepository.findByProjectId(projectId, safe),
+                    labelMapper::toResponse);
+        }
     }
 
     @Override

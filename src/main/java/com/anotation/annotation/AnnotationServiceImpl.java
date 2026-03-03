@@ -14,7 +14,10 @@ import com.anotation.task.TaskRepository;
 import com.anotation.task.TaskStatus;
 import com.anotation.user.User;
 import com.anotation.user.UserRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -52,7 +55,12 @@ public class AnnotationServiceImpl implements AnnotationService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AnnotationResponse> getAll(Pageable pageable) {
-        return PageResponse.from(annotationRepository.findAll(pageable), annotationMapper::toResponse);
+        try {
+            return PageResponse.from(annotationRepository.findAll(pageable), annotationMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(annotationRepository.findAll(safe), annotationMapper::toResponse);
+        }
     }
 
     @Override
@@ -64,8 +72,14 @@ public class AnnotationServiceImpl implements AnnotationService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AnnotationResponse> getByTask(UUID taskId, Pageable pageable) {
-        return PageResponse.from(annotationRepository.findByTaskId(taskId, pageable),
-                annotationMapper::toResponse);
+        try {
+            return PageResponse.from(annotationRepository.findByTaskId(taskId, pageable),
+                    annotationMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(annotationRepository.findByTaskId(taskId, safe),
+                    annotationMapper::toResponse);
+        }
     }
 
     // ── Submit (Create) ──────────────────────────────────────────────────────────

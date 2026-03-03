@@ -5,7 +5,10 @@ import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
 import com.anotation.project.Project;
 import com.anotation.project.ProjectRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +33,12 @@ public class DatasetServiceImpl implements DatasetService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<DatasetResponse> getAll(Pageable pageable) {
-        return PageResponse.from(datasetRepository.findAll(pageable), datasetMapper::toResponse);
+        try {
+            return PageResponse.from(datasetRepository.findAll(pageable), datasetMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(datasetRepository.findAll(safe), datasetMapper::toResponse);
+        }
     }
 
     @Override
@@ -42,8 +50,14 @@ public class DatasetServiceImpl implements DatasetService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<DatasetResponse> getByProject(UUID projectId, Pageable pageable) {
-        return PageResponse.from(datasetRepository.findByProjectId(projectId, pageable),
-                datasetMapper::toResponse);
+        try {
+            return PageResponse.from(datasetRepository.findByProjectId(projectId, pageable),
+                    datasetMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(datasetRepository.findByProjectId(projectId, safe),
+                    datasetMapper::toResponse);
+        }
     }
 
     @Override

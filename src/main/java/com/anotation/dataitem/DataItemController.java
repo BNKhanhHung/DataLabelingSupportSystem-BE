@@ -4,6 +4,7 @@ import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,8 +26,9 @@ public class DataItemController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all data items")
-    public ResponseEntity<PageResponse<DataItemResponse>> getAll(Pageable pageable) {
+    @Operation(summary = "Get all data items",
+            description = "Sort hợp lệ: id, status, createdAt, contentUrl (vd: sort=id,asc). Tránh sort=string.")
+    public ResponseEntity<PageResponse<DataItemResponse>> getAll(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(dataItemService.getAll(pageable)); // 200
     }
 
@@ -37,19 +39,21 @@ public class DataItemController {
     }
 
     @GetMapping("/dataset/{datasetId}")
-    @Operation(summary = "Get all items in a dataset")
+    @Operation(summary = "Get all items in a dataset",
+            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<DataItemResponse>> getByDataset(
             @PathVariable UUID datasetId,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(dataItemService.getByDataset(datasetId, pageable)); // 200
     }
 
     @GetMapping("/dataset/{datasetId}/status/{status}")
-    @Operation(summary = "Get items in a dataset filtered by status")
+    @Operation(summary = "Get items in a dataset filtered by status",
+            description = "Sort hợp lệ: id, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<DataItemResponse>> getByDatasetAndStatus(
             @PathVariable UUID datasetId,
             @PathVariable DataItemStatus status,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(dataItemService.getByDatasetAndStatus(datasetId, status, pageable)); // 200
     }
 

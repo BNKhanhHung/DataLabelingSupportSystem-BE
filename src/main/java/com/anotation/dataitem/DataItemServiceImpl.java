@@ -7,7 +7,10 @@ import com.anotation.exception.NotFoundException;
 import com.anotation.dataset.Dataset;
 import com.anotation.dataset.DatasetRepository;
 import com.anotation.storage.SupabaseStorageService;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,7 +39,12 @@ public class DataItemServiceImpl implements DataItemService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<DataItemResponse> getAll(Pageable pageable) {
-        return PageResponse.from(dataItemRepository.findAll(pageable), dataItemMapper::toResponse);
+        try {
+            return PageResponse.from(dataItemRepository.findAll(pageable), dataItemMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(dataItemRepository.findAll(safe), dataItemMapper::toResponse);
+        }
     }
 
     @Override
@@ -48,17 +56,30 @@ public class DataItemServiceImpl implements DataItemService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<DataItemResponse> getByDataset(UUID datasetId, Pageable pageable) {
-        return PageResponse.from(dataItemRepository.findByDatasetId(datasetId, pageable),
-                dataItemMapper::toResponse);
+        try {
+            return PageResponse.from(dataItemRepository.findByDatasetId(datasetId, pageable),
+                    dataItemMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(dataItemRepository.findByDatasetId(datasetId, safe),
+                    dataItemMapper::toResponse);
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<DataItemResponse> getByDatasetAndStatus(
             UUID datasetId, DataItemStatus status, Pageable pageable) {
-        return PageResponse.from(
-                dataItemRepository.findByDatasetIdAndStatus(datasetId, status, pageable),
-                dataItemMapper::toResponse);
+        try {
+            return PageResponse.from(
+                    dataItemRepository.findByDatasetIdAndStatus(datasetId, status, pageable),
+                    dataItemMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(
+                    dataItemRepository.findByDatasetIdAndStatus(datasetId, status, safe),
+                    dataItemMapper::toResponse);
+        }
     }
 
     @Override

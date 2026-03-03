@@ -7,7 +7,10 @@ import com.anotation.role.Role;
 import com.anotation.role.RoleRepository;
 import com.anotation.user.User;
 import com.anotation.user.UserRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +39,12 @@ public class UserRoleServiceImpl implements UserRoleService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<UserRoleResponse> getAll(Pageable pageable) {
-        return PageResponse.from(userRoleRepository.findAll(pageable), userRoleMapper::toResponse);
+        try {
+            return PageResponse.from(userRoleRepository.findAll(pageable), userRoleMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(userRoleRepository.findAll(safe), userRoleMapper::toResponse);
+        }
     }
 
     @Override
@@ -48,8 +56,14 @@ public class UserRoleServiceImpl implements UserRoleService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<UserRoleResponse> getByUser(UUID userId, Pageable pageable) {
-        return PageResponse.from(userRoleRepository.findByUserId(userId, pageable),
-                userRoleMapper::toResponse);
+        try {
+            return PageResponse.from(userRoleRepository.findByUserId(userId, pageable),
+                    userRoleMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(userRoleRepository.findByUserId(userId, safe),
+                    userRoleMapper::toResponse);
+        }
     }
 
     @Override

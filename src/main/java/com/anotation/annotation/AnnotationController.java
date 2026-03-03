@@ -4,6 +4,7 @@ import com.anotation.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +24,9 @@ public class AnnotationController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all annotations")
-    public ResponseEntity<PageResponse<AnnotationResponse>> getAll(Pageable pageable) {
+    @Operation(summary = "Get all annotations",
+            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    public ResponseEntity<PageResponse<AnnotationResponse>> getAll(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(annotationService.getAll(pageable)); // 200
     }
 
@@ -35,10 +37,11 @@ public class AnnotationController {
     }
 
     @GetMapping("/task/{taskId}")
-    @Operation(summary = "Get all annotations in a task")
+    @Operation(summary = "Get all annotations in a task",
+            description = "Sort hợp lệ: id, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<AnnotationResponse>> getByTask(
             @PathVariable UUID taskId,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(annotationService.getByTask(taskId, pageable)); // 200
     }
 

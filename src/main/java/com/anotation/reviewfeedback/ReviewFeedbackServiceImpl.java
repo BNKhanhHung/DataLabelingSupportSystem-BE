@@ -16,7 +16,10 @@ import com.anotation.task.TaskRepository;
 import com.anotation.task.TaskStatus;
 import com.anotation.user.User;
 import com.anotation.user.UserRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -57,7 +60,12 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ReviewResponse> getAll(Pageable pageable) {
-        return PageResponse.from(reviewFeedbackRepository.findAll(pageable), reviewMapper::toResponse);
+        try {
+            return PageResponse.from(reviewFeedbackRepository.findAll(pageable), reviewMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(reviewFeedbackRepository.findAll(safe), reviewMapper::toResponse);
+        }
     }
 
     @Override
@@ -69,15 +77,27 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ReviewResponse> getByTask(UUID taskId, Pageable pageable) {
-        return PageResponse.from(reviewFeedbackRepository.findByTaskId(taskId, pageable),
-                reviewMapper::toResponse);
+        try {
+            return PageResponse.from(reviewFeedbackRepository.findByTaskId(taskId, pageable),
+                    reviewMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(reviewFeedbackRepository.findByTaskId(taskId, safe),
+                    reviewMapper::toResponse);
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ReviewResponse> getByReviewer(UUID reviewerId, Pageable pageable) {
-        return PageResponse.from(reviewFeedbackRepository.findByReviewerId(reviewerId, pageable),
-                reviewMapper::toResponse);
+        try {
+            return PageResponse.from(reviewFeedbackRepository.findByReviewerId(reviewerId, pageable),
+                    reviewMapper::toResponse);
+        } catch (PropertyReferenceException e) {
+            Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
+            return PageResponse.from(reviewFeedbackRepository.findByReviewerId(reviewerId, safe),
+                    reviewMapper::toResponse);
+        }
     }
 
     // ── Review (Create) ──────────────────────────────────────────────────────────
