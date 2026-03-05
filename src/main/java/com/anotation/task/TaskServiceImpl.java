@@ -85,7 +85,8 @@ public class TaskServiceImpl implements TaskService {
         Task task = findOrThrow(taskId);
         User currentUser = getCurrentUser();
         boolean isAnnotator = task.getAnnotator().getId().equals(currentUser.getId());
-        boolean isManagerOrAdmin = currentUser.getSystemRole() == SystemRole.MANAGER || currentUser.getSystemRole() == SystemRole.ADMIN;
+        boolean isManagerOrAdmin = currentUser.getSystemRole() == SystemRole.MANAGER
+                || currentUser.getSystemRole() == SystemRole.ADMIN;
         if (!isAnnotator && !isManagerOrAdmin) {
             throw new BadRequestException("Only the assigned annotator or Manager/Admin can view task items.");
         }
@@ -252,6 +253,81 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse updateStatus(UUID id, TaskStatus status) {
         Task task = findOrThrow(id);
         task.setStatus(status);
+        taskRepository.save(task);
+        return toResponse(task);
+    }
+
+    // ── Annotator: nộp task cho Reviewer ─────────────────────────────────────────
+
+    @Override
+    public TaskResponse submitForReview(UUID taskId) {
+        Task task = findOrThrow(taskId);
+        User currentUser = getCurrentUser();
+
+        // 1. Chỉ Annotator của task mới được nộp
+        if (!task.getAnnotator().getId().equals(currentUser.getId())) {
+            throw new BadRequestException("Only the assigned annotator can submit this task for review.");
+        }
+
+        // 2. Task phải đang IN_PROGRESS
+        if (task.getStatus() != TaskStatus.IN_PROGRESS) {
+            throw new BadRequestException(
+                    "Task must be IN_PROGRESS to submit for review. Current status: " + task.getStatus());
+        }
+
+        // 3. Tất cả TaskItems phải đã có annotation
+        long missingCount = taskItemRepository.countItemsWithoutAnnotation(taskId);
+        if (missingCount > 0) {
+            throw new BadRequestException(
+                    "Cannot submit: " + missingCount + " item(s) have not been annotated yet.");
+        }
+
+        // Chuyển trạng thái → SUBMITTED
+        task.setStatus(TaskStatus.SUBMITTED);
+        taskRepository.save(task);
+        return toResponse(task);
+    }
+
+    // ── Reviewer: hoàn tất review và gửi kết quả ────────────────────────────────
+
+    @Override
+    public TaskResponse completeReview(UUID taskId) {
+        Task task = findOrThrow(taskId);
+        User currentUser = getCurrentUser();
+
+        // 1. Chỉ Reviewer của task mới được hoàn tất review
+        if (!task.getReviewer().getId().equals(currentUser.getId())) {
+            boolean isManagerOrAdmin = currentUser.getSystemRole() == SystemRole.MANAGER
+                    || currentUser.getSystemRole() == SystemRole.ADMIN;
+            if (!isManagerOrAdmin) {
+                throw new BadRequestException("Only the assigned reviewer or Manager/Admin can complete review.");
+            }
+        }
+
+        // 2. Task phải đang SUBMITTED
+        if (task.getStatus() != TaskStatus.SUBMITTED) {
+            throw new BadRequestException(
+                    "Task must be SUBMITTED to complete review. Current status: " + task.getStatus());
+        }
+
+        // 3. Tất cả annotations phải đã được review (không còn SUBMITTED)
+        long pendingCount = annotationRepository.countSubmittedByTaskId(taskId);
+        if (pendingCount > 0) {
+            throw new BadRequestException(
+                    "Cannot complete review: " + pendingCount + " annotation(s) have not been reviewed yet.");
+        }
+
+        // 4. Kiểm tra có annotation bị REJECTED không
+        long rejectedCount = annotationRepository.countRejectedByTaskId(taskId);
+        if (rejectedCount > 0) {
+            // Có annotation bị từ chối → trả lại cho Annotator sửa
+            task.setStatus(TaskStatus.IN_PROGRESS);
+            taskRepository.save(task);
+            return toResponse(task);
+        }
+
+        // 5. Tất cả APPROVED → gửi cho Manager
+        task.setStatus(TaskStatus.REVIEWED);
         taskRepository.save(task);
         return toResponse(task);
     }

@@ -25,8 +25,7 @@ public class TaskController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all tasks",
-            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    @Operation(summary = "Get all tasks", description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<TaskResponse>> getAll(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(taskService.getAll(pageable)); // 200
     }
@@ -44,8 +43,7 @@ public class TaskController {
     }
 
     @GetMapping("/project/{projectId}")
-    @Operation(summary = "Get all tasks in a project",
-            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    @Operation(summary = "Get all tasks in a project", description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<TaskResponse>> getByProject(
             @PathVariable UUID projectId,
             @ParameterObject Pageable pageable) {
@@ -53,8 +51,7 @@ public class TaskController {
     }
 
     @GetMapping("/annotator/{annotatorId}")
-    @Operation(summary = "Get all tasks assigned to an annotator",
-            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    @Operation(summary = "Get all tasks assigned to an annotator", description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<TaskResponse>> getByAnnotator(
             @PathVariable UUID annotatorId,
             @ParameterObject Pageable pageable) {
@@ -62,8 +59,7 @@ public class TaskController {
     }
 
     @GetMapping("/reviewer/{reviewerId}")
-    @Operation(summary = "Get all tasks assigned to a reviewer",
-            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    @Operation(summary = "Get all tasks assigned to a reviewer", description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<TaskResponse>> getByReviewer(
             @PathVariable UUID reviewerId,
             @ParameterObject Pageable pageable) {
@@ -71,8 +67,7 @@ public class TaskController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Search tasks by project name and status",
-            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    @Operation(summary = "Search tasks by project name and status", description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<TaskResponse>> search(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) TaskStatus status,
@@ -88,11 +83,23 @@ public class TaskController {
     }
 
     @PatchMapping("/{id}/status")
-    @Operation(summary = "Update task status")
+    @Operation(summary = "Update task status (Manager/Admin)")
     public ResponseEntity<TaskResponse> updateStatus(
             @PathVariable UUID id,
             @RequestParam TaskStatus status) {
         return ResponseEntity.ok(taskService.updateStatus(id, status)); // 200
+    }
+
+    @PatchMapping("/{id}/submit")
+    @Operation(summary = "Annotator submits task for review", description = "Chuyển task từ IN_PROGRESS → SUBMITTED. Yêu cầu tất cả items đã được gán nhãn.")
+    public ResponseEntity<TaskResponse> submitForReview(@PathVariable UUID id) {
+        return ResponseEntity.ok(taskService.submitForReview(id)); // 200
+    }
+
+    @PatchMapping("/{id}/complete-review")
+    @Operation(summary = "Reviewer completes review", description = "Nếu tất cả annotations APPROVED → REVIEWED (gửi Manager). Nếu có REJECTED → IN_PROGRESS (trả Annotator).")
+    public ResponseEntity<TaskResponse> completeReview(@PathVariable UUID id) {
+        return ResponseEntity.ok(taskService.completeReview(id)); // 200
     }
 
     @DeleteMapping("/{id}")

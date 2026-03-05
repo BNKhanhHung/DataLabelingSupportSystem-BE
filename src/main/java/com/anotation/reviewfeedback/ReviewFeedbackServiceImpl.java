@@ -113,6 +113,12 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
         Task task = annotation.getTaskItem().getTask();
         DataItem dataItem = annotation.getTaskItem().getDataItem();
 
+        // 1.5 Task must be SUBMITTED (Annotator đã nộp, Reviewer mới được review)
+        if (task.getStatus() != TaskStatus.SUBMITTED) {
+            throw new BadRequestException(
+                    "Task must be SUBMITTED to review annotations. Current status: " + task.getStatus());
+        }
+
         // 2. Authenticated user must match request reviewer
         User currentUser = getCurrentUser();
         if (!currentUser.getId().equals(request.getReviewerId())) {
@@ -155,38 +161,27 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
         feedback.setComment(request.getComment());
         reviewFeedbackRepository.save(feedback);
 
-        // ── Status transitions ────────────────────────────────────────────────────
+        // ── Status transitions (chỉ cập nhật Annotation + DataItem, Task do Reviewer
+        // quyết) ──
 
         if (request.getStatus() == ReviewStatus.APPROVED) {
-            // Annotation.status → APPROVED
             annotation.setStatus(AnnotationStatus.APPROVED);
             annotationRepository.save(annotation);
 
-            // DataItem.status → REVIEWED
             dataItem.setStatus(DataItemStatus.REVIEWED);
             dataItemRepository.save(dataItem);
 
-            // Task.status → COMPLETED if ALL DataItems are REVIEWED
-            long nonReviewed = taskItemRepository.countNonReviewedItemsInTask(task.getId());
-            if (nonReviewed == 0) {
-                task.setStatus(TaskStatus.COMPLETED);
-                taskRepository.save(task);
-            }
-
         } else {
             // REJECTED
-            // Annotation.status → REJECTED
             annotation.setStatus(AnnotationStatus.REJECTED);
             annotationRepository.save(annotation);
 
-            // DataItem.status → ASSIGNED (reset for re-annotation)
             dataItem.setStatus(DataItemStatus.ASSIGNED);
             dataItemRepository.save(dataItem);
         }
 
         return reviewMapper.toResponse(feedback);
     }
-
     // ── Delete ───────────────────────────────────────────────────────────────────
 
     @Override

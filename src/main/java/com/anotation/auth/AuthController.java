@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.*;
  * Auth Controller — Login and public register (for testing).
  *
  * Admin creates user accounts via POST /api/users (requires ADMIN).
- * POST /api/auth/register is public, for testing only — no authorization required.
+ * POST /api/auth/register is public, for testing only — no authorization
+ * required.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -36,8 +37,11 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "[Public - for testing] Create a new user account without authorization")
+    @Operation(summary = "Register a new user account (always USER role)")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserCreateRequest request) {
+        // Public register luôn tạo USER — chỉ Admin mới set role khác qua POST
+        // /api/users
+        request.setSystemRole(null);
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(request));
     }
 }

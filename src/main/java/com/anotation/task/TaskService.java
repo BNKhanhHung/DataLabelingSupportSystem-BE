@@ -11,7 +11,10 @@ public interface TaskService {
 
     TaskResponse getById(UUID id);
 
-    /** Items in this task (for annotator labeling: taskItemId, dataItemId, contentUrl, hasAnnotation). */
+    /**
+     * Items in this task (for annotator labeling: taskItemId, dataItemId,
+     * contentUrl, hasAnnotation).
+     */
     List<TaskItemResponse> getTaskItems(UUID taskId);
 
     PageResponse<TaskResponse> getByProject(UUID projectId, Pageable pageable);
@@ -25,6 +28,18 @@ public interface TaskService {
     TaskResponse create(TaskRequest request);
 
     TaskResponse updateStatus(UUID id, TaskStatus status);
+
+    /**
+     * Annotator nộp task đã gán nhãn xong → chuyển sang SUBMITTED để Reviewer kiểm
+     * duyệt.
+     */
+    TaskResponse submitForReview(UUID taskId);
+
+    /**
+     * Reviewer hoàn tất review → nếu tất cả APPROVED → REVIEWED; nếu có REJECTED →
+     * trả về IN_PROGRESS.
+     */
+    TaskResponse completeReview(UUID taskId);
 
     void delete(UUID id);
 }

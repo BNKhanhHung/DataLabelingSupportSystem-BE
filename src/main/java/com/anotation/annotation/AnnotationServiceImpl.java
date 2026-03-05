@@ -7,6 +7,8 @@ import com.anotation.exception.NotFoundException;
 import com.anotation.dataitem.DataItem;
 import com.anotation.dataitem.DataItemRepository;
 import com.anotation.dataitem.DataItemStatus;
+import com.anotation.reviewfeedback.ReviewFeedback;
+import com.anotation.reviewfeedback.ReviewFeedbackRepository;
 import com.anotation.task.Task;
 import com.anotation.task.TaskItem;
 import com.anotation.task.TaskItemRepository;
@@ -23,6 +25,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -35,19 +38,22 @@ public class AnnotationServiceImpl implements AnnotationService {
     private final DataItemRepository dataItemRepository;
     private final UserRepository userRepository;
     private final AnnotationMapper annotationMapper;
+    private final ReviewFeedbackRepository reviewFeedbackRepository;
 
     public AnnotationServiceImpl(AnnotationRepository annotationRepository,
             TaskItemRepository taskItemRepository,
             TaskRepository taskRepository,
             DataItemRepository dataItemRepository,
             UserRepository userRepository,
-            AnnotationMapper annotationMapper) {
+            AnnotationMapper annotationMapper,
+            ReviewFeedbackRepository reviewFeedbackRepository) {
         this.annotationRepository = annotationRepository;
         this.taskItemRepository = taskItemRepository;
         this.taskRepository = taskRepository;
         this.dataItemRepository = dataItemRepository;
         this.userRepository = userRepository;
         this.annotationMapper = annotationMapper;
+        this.reviewFeedbackRepository = reviewFeedbackRepository;
     }
 
     // ── Read ─────────────────────────────────────────────────────────────────────
@@ -160,8 +166,18 @@ public class AnnotationServiceImpl implements AnnotationService {
                     "Only REJECTED annotations can be updated. Current status: " + annotation.getStatus());
         }
 
+        // Xóa ReviewFeedback cũ để Reviewer có thể review lại
+        Optional<ReviewFeedback> oldReview = reviewFeedbackRepository.findByAnnotationId(annotation.getId());
+        oldReview.ifPresent(rf -> reviewFeedbackRepository.deleteById(rf.getId()));
+
         annotation.setContent(content);
         annotation.setStatus(AnnotationStatus.SUBMITTED); // re-submit after fix
+
+        // DataItem status → ANNOTATED (đã sửa xong, chờ review lại)
+        DataItem dataItem = annotation.getTaskItem().getDataItem();
+        dataItem.setStatus(DataItemStatus.ANNOTATED);
+        dataItemRepository.save(dataItem);
+
         return annotationMapper.toResponse(annotationRepository.save(annotation));
     }
 
