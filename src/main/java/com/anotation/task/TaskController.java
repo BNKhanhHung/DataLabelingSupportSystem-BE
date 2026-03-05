@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -34,6 +35,12 @@ public class TaskController {
     @Operation(summary = "Get task by ID")
     public ResponseEntity<TaskResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(taskService.getById(id)); // 200
+    }
+
+    @GetMapping("/{id}/items")
+    @Operation(summary = "Get task items (for annotator labeling: taskItemId, dataItemId, contentUrl, hasAnnotation)")
+    public ResponseEntity<List<TaskItemResponse>> getTaskItems(@PathVariable UUID id) {
+        return ResponseEntity.ok(taskService.getTaskItems(id)); // 200
     }
 
     @GetMapping("/project/{projectId}")

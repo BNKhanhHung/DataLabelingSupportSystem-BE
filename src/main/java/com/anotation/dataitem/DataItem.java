@@ -8,9 +8,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "data_items", schema = "public", uniqueConstraints = {
-        @UniqueConstraint(name = "uq_dataitem_url_dataset", columnNames = { "dataset_id", "content_url" })
-})
+@Table(name = "data_items", schema = "public")
 public class DataItem {
 
     @Id
@@ -22,14 +20,14 @@ public class DataItem {
     @JoinColumn(name = "dataset_id", nullable = false)
     private Dataset dataset;
 
-    @Column(name = "content_url", nullable = false)
+    @Column(name = "content_url", nullable = false, length = 1000)
     private String contentUrl;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "metadata", columnDefinition = "TEXT", nullable = true)
     private String metadata;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "status", nullable = false, length = 50)
     private DataItemStatus status;
 
     @Column(name = "created_at", nullable = false, updatable = false)

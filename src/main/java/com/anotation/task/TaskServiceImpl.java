@@ -1,5 +1,6 @@
 package com.anotation.task;
 
+import com.anotation.annotation.AnnotationRepository;
 import com.anotation.common.PageResponse;
 import com.anotation.exception.BadRequestException;
 import com.anotation.exception.NotFoundException;
@@ -36,6 +37,7 @@ public class TaskServiceImpl implements TaskService {
     private final UserRoleRepository userRoleRepository;
     private final DataItemRepository dataItemRepository;
     private final TaskMapper taskMapper;
+    private final AnnotationRepository annotationRepository;
 
     public TaskServiceImpl(TaskRepository taskRepository,
             TaskItemRepository taskItemRepository,
@@ -43,7 +45,8 @@ public class TaskServiceImpl implements TaskService {
             UserRepository userRepository,
             UserRoleRepository userRoleRepository,
             DataItemRepository dataItemRepository,
-            TaskMapper taskMapper) {
+            TaskMapper taskMapper,
+            AnnotationRepository annotationRepository) {
         this.taskRepository = taskRepository;
         this.taskItemRepository = taskItemRepository;
         this.projectRepository = projectRepository;
@@ -51,6 +54,7 @@ public class TaskServiceImpl implements TaskService {
         this.userRoleRepository = userRoleRepository;
         this.dataItemRepository = dataItemRepository;
         this.taskMapper = taskMapper;
+        this.annotationRepository = annotationRepository;
     }
 
     // ── Read operations ──────────────────────────────────────────────────────────
@@ -73,6 +77,30 @@ public class TaskServiceImpl implements TaskService {
     @Transactional(readOnly = true)
     public TaskResponse getById(UUID id) {
         return toResponse(findOrThrow(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TaskItemResponse> getTaskItems(UUID taskId) {
+        Task task = findOrThrow(taskId);
+        User currentUser = getCurrentUser();
+        boolean isAnnotator = task.getAnnotator().getId().equals(currentUser.getId());
+        boolean isManagerOrAdmin = currentUser.getSystemRole() == SystemRole.MANAGER || currentUser.getSystemRole() == SystemRole.ADMIN;
+        if (!isAnnotator && !isManagerOrAdmin) {
+            throw new BadRequestException("Only the assigned annotator or Manager/Admin can view task items.");
+        }
+        List<TaskItem> items = taskItemRepository.findByTaskId(task.getId());
+        List<TaskItemResponse> result = new ArrayList<>();
+        for (TaskItem ti : items) {
+            DataItem di = ti.getDataItem();
+            boolean hasAnnotation = annotationRepository.existsByTaskItemId(ti.getId());
+            result.add(new TaskItemResponse(
+                    ti.getId(),
+                    di.getId(),
+                    di.getContentUrl() != null ? di.getContentUrl() : "",
+                    hasAnnotation));
+        }
+        return result;
     }
 
     @Override
@@ -128,8 +156,10 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse create(TaskRequest request) {
         User currentUser = getCurrentUser();
         boolean isAdmin = currentUser.getSystemRole() == SystemRole.ADMIN;
-        if (!isAdmin && !userRoleRepository.existsByUserIdAndRoleNameIgnoreCase(
-                currentUser.getId(), "Manager")) {
+        boolean isSystemManager = currentUser.getSystemRole() == SystemRole.MANAGER;
+        boolean hasManagerRole = userRoleRepository.existsByUserIdAndRoleNameIgnoreCase(
+                currentUser.getId(), "Manager");
+        if (!isAdmin && !isSystemManager && !hasManagerRole) {
             throw new BadRequestException("Only Manager can create tasks.");
         }
 

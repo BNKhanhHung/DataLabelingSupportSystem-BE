@@ -1,3 +1,7 @@
+# ── Cấu hình Backend - Data Labeling Support System ─────────────────────────
+# Có thể ghi đè bằng biến môi trường (VD: SUPABASE_URL=...)
+# Supabase: Dashboard → Project Settings → API (URL, service_role) và Storage (tạo bucket data-items)
+
 server:
   port: ${SERVER_PORT:8080}
 
@@ -24,13 +28,20 @@ springdoc:
   swagger-ui:
     path: /swagger
 
-# ── JWT Configuration ─────────────────────────────────────────────────────────
+# ── JWT ─────────────────────────────────────────────────────────────────────
 jwt:
   secret: ${JWT_SECRET:MyDefaultSuperSecretKeyThatIsAtLeast256BitsLong!!}
   expiration-ms: ${JWT_EXPIRATION:86400000}   # 24 hours
 
+# ── Supabase (Storage upload file) ───────────────────────────────────────────
 supabase:
-  url: ${SUPABASE_URL:https://placeholder.supabase.co}
-  service-key: ${SUPABASE_SERVICE_KEY:placeholder-key-for-local-test}
+  url: https://wqillyzrmdbjvxfnckhx.supabase.co
+  service-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxaWxseXpybWRianZ4Zm5ja2h4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDA1OTI0NCwiZXhwIjoyMDg1NjM1MjQ0fQ.QoLHcdLK7YYs1m9uVkaRAWio-GSw39VZhXbtDDOIrJQ
   storage:
-    bucket: ${SUPABASE_STORAGE_BUCKET:data-items}
+    bucket: data-items
+
+# ── Upload local (fallback khi Supabase lỗi; dùng đường dẫn tuyệt đối tránh FileNotFoundException) ─
+app:
+  upload:
+    dir: ${UPLOAD_DIR:${user.home}/.data-labeling/uploads}
+  base-url: ${APP_BASE_URL:http://localhost:8080}

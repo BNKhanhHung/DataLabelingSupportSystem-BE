@@ -21,9 +21,9 @@ import java.util.List;
 /**
  * Security Configuration — Authorization Rules
  *
- * - ADMIN & MANAGER : full access to all APIs.
- * - USER : only login, profile (users/me), labeling (annotations), review (review-feedbacks),
- *   and read own tasks (GET tasks by annotator/id) for workflow.
+ * - USER (authenticated): GET trên các API (projects, tasks, labels, datasets, data-items, roles, user-roles, users);
+ *   đổi mật khẩu (PATCH /api/users/me/password). Không được chỉnh sửa role, user-role, user (trừ đổi mật khẩu).
+ * - ADMIN & MANAGER: full access (GET + POST/PUT/PATCH/DELETE) trên quản lý users, roles, user-roles, projects, tasks, labels, datasets, data-items.
  */
 @Configuration
 @EnableWebSecurity
@@ -50,34 +50,39 @@ public class SecurityConfig {
                                 "/swagger",
                                 "/swagger-ui/**",
                                 "/api-docs/**",
-                                "/v3/api-docs/**")
+                                "/v3/api-docs/**",
+                                "/api/uploads/**")
                         .permitAll()
 
-                        // ── USER: profile (đăng nhập xong xem thông tin mình) ─────
+                        // ── USER: profile + chỉ đổi mật khẩu (không chỉnh sửa user khác) ─
                         .requestMatchers("/api/users/me", "/api/users/me/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/me/password").authenticated()
 
-                        // ── USER: đánh nhãn (annotations) ────────────────────────
+                        // ── USER: GET trên mọi API (đọc only); không cho POST/PUT/PATCH/DELETE ở các rule sau ─
+                        .requestMatchers(HttpMethod.GET, "/api/projects/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/tasks/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/labels/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/datasets/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/data-items/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/roles/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/user-roles/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
+
+                        // ── USER: đánh nhãn, review ─────────────────────────────
                         .requestMatchers("/api/annotations", "/api/annotations/**").authenticated()
-
-                        // ── USER: review (review-feedbacks) ─────────────────────
                         .requestMatchers("/api/review-feedbacks", "/api/review-feedbacks/**").authenticated()
 
-                        // ── USER: xem task của mình (annotator/reviewer) ─────────
-                        .requestMatchers(HttpMethod.GET, "/api/tasks/annotator/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/tasks/reviewer/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/tasks/*").authenticated()
-
-                        // ── ADMIN & MANAGER only — quản lý users, roles, projects, tasks, ...
+                        // ── Chỉnh sửa (POST/PUT/PATCH/DELETE): chỉ ADMIN & MANAGER; không cho USER sửa role, user-role, user (trừ đổi mật khẩu đã cho ở trên) ─
                         .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/roles/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers("/api/user-roles/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/projects/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "MANAGER")
-                        .requestMatchers("/api/user-roles/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/labels/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/datasets/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/data-items/**").hasAnyRole("ADMIN", "MANAGER")
 
-                        // ── Any other API (future) — ADMIN & MANAGER only ─────────
+                        // ── Còn lại (API tương lai) — ADMIN & MANAGER ─────────
                         .anyRequest().hasAnyRole("ADMIN", "MANAGER"))
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
@@ -88,10 +93,20 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:50337", "http://127.0.0.1:50337", "http://localhost:5173", "http://127.0.0.1:5173"));
+        // Cho phép frontend chạy từ nhiều origin (serve, Live Server, Vite, Cursor, ...)
+        config.setAllowedOrigins(List.of(
+                "http://localhost:3000", "http://127.0.0.1:3000",
+                "http://localhost:5173", "http://127.0.0.1:5173",
+                "http://localhost:5500", "http://127.0.0.1:5500",
+                "http://localhost:5000", "http://127.0.0.1:5000",
+                "http://localhost:8081", "http://127.0.0.1:8081",
+                "http://localhost:4173", "http://127.0.0.1:4173",
+                "http://localhost:50337", "http://127.0.0.1:50337"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
