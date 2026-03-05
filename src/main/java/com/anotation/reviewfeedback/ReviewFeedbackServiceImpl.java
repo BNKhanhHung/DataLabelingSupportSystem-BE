@@ -172,12 +172,15 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
             dataItemRepository.save(dataItem);
 
         } else {
-            // REJECTED
+            // REJECTED → Task chuyển sang DENIED
             annotation.setStatus(AnnotationStatus.REJECTED);
             annotationRepository.save(annotation);
 
             dataItem.setStatus(DataItemStatus.ASSIGNED);
             dataItemRepository.save(dataItem);
+
+            task.setStatus(TaskStatus.DENIED);
+            taskRepository.save(task);
         }
 
         return reviewMapper.toResponse(feedback);

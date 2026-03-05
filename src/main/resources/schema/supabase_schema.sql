@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS public.tasks (
   project_id uuid NOT NULL,
   annotator_id uuid NOT NULL,
   reviewer_id uuid NOT NULL,
-  status character varying NOT NULL CHECK (status::text = ANY (ARRAY['OPEN'::character varying, 'IN_PROGRESS'::character varying, 'COMPLETED'::character varying]::text[])),
+  status character varying NOT NULL CHECK (status::text = ANY (ARRAY['OPEN'::character varying, 'IN_PROGRESS'::character varying, 'SUBMITTED'::character varying, 'REVIEWED'::character varying, 'DENIED'::character varying, 'COMPLETED'::character varying]::text[])),
   created_at timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
   CONSTRAINT tasks_pkey PRIMARY KEY (id),
   CONSTRAINT fk_tasks_project FOREIGN KEY (project_id) REFERENCES public.projects(id),

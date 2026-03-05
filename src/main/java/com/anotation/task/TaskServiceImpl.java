@@ -244,6 +244,10 @@ public class TaskServiceImpl implements TaskService {
             dataItemIds.add(item.getId());
         }
 
+        // 9. Task đã phân công xong → tự cập nhật status IN_PROGRESS
+        task.setStatus(TaskStatus.IN_PROGRESS);
+        taskRepository.save(task);
+
         return taskMapper.toResponse(task, dataItemIds);
     }
 
@@ -269,10 +273,10 @@ public class TaskServiceImpl implements TaskService {
             throw new BadRequestException("Only the assigned annotator can submit this task for review.");
         }
 
-        // 2. Task phải đang IN_PROGRESS
-        if (task.getStatus() != TaskStatus.IN_PROGRESS) {
+        // 2. Task phải đang IN_PROGRESS hoặc DENIED (nộp lại sau khi sửa)
+        if (task.getStatus() != TaskStatus.IN_PROGRESS && task.getStatus() != TaskStatus.DENIED) {
             throw new BadRequestException(
-                    "Task must be IN_PROGRESS to submit for review. Current status: " + task.getStatus());
+                    "Task must be IN_PROGRESS or DENIED to submit for review. Current status: " + task.getStatus());
         }
 
         // 3. Tất cả TaskItems phải đã có annotation
@@ -320,8 +324,8 @@ public class TaskServiceImpl implements TaskService {
         // 4. Kiểm tra có annotation bị REJECTED không
         long rejectedCount = annotationRepository.countRejectedByTaskId(taskId);
         if (rejectedCount > 0) {
-            // Có annotation bị từ chối → trả lại cho Annotator sửa
-            task.setStatus(TaskStatus.IN_PROGRESS);
+            // Có annotation bị từ chối → task DENIED (Annotator sửa lại)
+            task.setStatus(TaskStatus.DENIED);
             taskRepository.save(task);
             return toResponse(task);
         }

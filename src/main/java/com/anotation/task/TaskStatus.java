@@ -5,5 +5,6 @@ public enum TaskStatus {
     IN_PROGRESS, // Annotator đang gán nhãn (ít nhất 1 DataItem đã ANNOTATED)
     SUBMITTED, // Annotator đã nộp → chờ Reviewer kiểm duyệt
     REVIEWED, // Reviewer đã duyệt xong → Manager xem kết quả
+    DENIED, // Reviewer từ chối ít nhất một nhãn → Annotator cần sửa lại
     COMPLETED // Manager xác nhận hoàn tất (hoặc tất cả đều APPROVED)
 }

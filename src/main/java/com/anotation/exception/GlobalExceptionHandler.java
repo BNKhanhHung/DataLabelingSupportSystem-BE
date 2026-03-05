@@ -1,5 +1,6 @@
 package com.anotation.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -66,13 +67,27 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    // 400 — Database constraint violation (e.g. tasks_status_check chưa có DENIED)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex) {
+        String msg = ex.getMessage() != null ? ex.getMessage() : "Database constraint violation.";
+        if (msg.contains("tasks_status_check") || msg.contains("tasks") && msg.contains("status")) {
+            msg = "Trạng thái task không hợp lệ. Nếu dùng trạng thái DENIED/SUBMITTED/REVIEWED, chạy migration SQL thêm các giá trị này vào constraint bảng tasks (xem migrate_tasks_status_denied.sql).";
+        }
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Constraint violation",
+                msg);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     // 500 — Fallback for unexpected errors
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal Server Error",
-                ex.getMessage());
+                ex.getMessage() != null ? ex.getMessage() : "Unexpected error.");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 }
