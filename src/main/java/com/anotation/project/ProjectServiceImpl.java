@@ -3,6 +3,8 @@ package com.anotation.project;
 import com.anotation.common.PageResponse;
 import com.anotation.exception.DuplicateException;
 import com.anotation.exception.NotFoundException;
+import com.anotation.task.Task;
+import com.anotation.task.TaskRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -10,6 +12,7 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -18,20 +21,24 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
+    private final TaskRepository taskRepository;
 
-    public ProjectServiceImpl(ProjectRepository projectRepository, ProjectMapper projectMapper) {
+    public ProjectServiceImpl(ProjectRepository projectRepository,
+            ProjectMapper projectMapper,
+            TaskRepository taskRepository) {
         this.projectRepository = projectRepository;
         this.projectMapper = projectMapper;
+        this.taskRepository = taskRepository;
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ProjectResponse> getAll(Pageable pageable) {
         try {
-            return PageResponse.from(projectRepository.findAll(pageable), projectMapper::toResponse);
+            return PageResponse.from(projectRepository.findAll(pageable), this::toResponseWithStatus);
         } catch (PropertyReferenceException e) {
             Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
-            return PageResponse.from(projectRepository.findAll(safe), projectMapper::toResponse);
+            return PageResponse.from(projectRepository.findAll(safe), this::toResponseWithStatus);
         }
     }
 
@@ -43,11 +50,11 @@ public class ProjectServiceImpl implements ProjectService {
         }
         try {
             return PageResponse.from(projectRepository.findByNameContainingIgnoreCase(name, pageable),
-                    projectMapper::toResponse);
+                    this::toResponseWithStatus);
         } catch (PropertyReferenceException e) {
             Pageable safe = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
             return PageResponse.from(projectRepository.findByNameContainingIgnoreCase(name, safe),
-                    projectMapper::toResponse);
+                    this::toResponseWithStatus);
         }
     }
 
@@ -55,7 +62,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional(readOnly = true)
     public ProjectResponse getById(UUID id) {
         Project project = findOrThrow(id);
-        return projectMapper.toResponse(project);
+        return toResponseWithStatus(project);
     }
 
     @Override
@@ -65,7 +72,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         Project project = projectMapper.toEntity(request);
-        return projectMapper.toResponse(projectRepository.save(project));
+        return toResponseWithStatus(projectRepository.save(project));
     }
 
     @Override
@@ -77,7 +84,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         projectMapper.updateEntity(request, project);
-        return projectMapper.toResponse(projectRepository.save(project));
+        return toResponseWithStatus(projectRepository.save(project));
     }
 
     @Override
@@ -91,5 +98,14 @@ public class ProjectServiceImpl implements ProjectService {
     private Project findOrThrow(UUID id) {
         return projectRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Project not found with id: " + id));
+    }
+
+    /**
+     * Convert project to response with computed status from its tasks.
+     */
+    private ProjectResponse toResponseWithStatus(Project project) {
+        List<Task> tasks = taskRepository.findByProjectId(project.getId(),
+                Pageable.unpaged()).getContent();
+        return projectMapper.toResponse(project, tasks);
     }
 }
