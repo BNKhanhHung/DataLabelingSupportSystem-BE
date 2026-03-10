@@ -49,4 +49,26 @@ public interface AnnotationRepository extends JpaRepository<Annotation, UUID> {
                         AND a.status = com.anotation.annotation.AnnotationStatus.REJECTED
                         """)
         long countRejectedByTaskId(@Param("taskId") UUID taskId);
+
+        // ── KPI queries by annotator user ─────────────────────────────────────────
+
+        @Query("""
+                        SELECT COUNT(a) FROM Annotation a
+                        WHERE a.taskItem.task.annotator.id = :userId
+                        """)
+        long countByAnnotatorUserId(@Param("userId") UUID userId);
+
+        @Query("""
+                        SELECT COUNT(a) FROM Annotation a
+                        WHERE a.taskItem.task.annotator.id = :userId
+                        AND a.status = com.anotation.annotation.AnnotationStatus.APPROVED
+                        """)
+        long countApprovedByAnnotatorUserId(@Param("userId") UUID userId);
+
+        @Query("""
+                        SELECT COUNT(a) FROM Annotation a
+                        WHERE a.taskItem.task.annotator.id = :userId
+                        AND a.status = com.anotation.annotation.AnnotationStatus.REJECTED
+                        """)
+        long countRejectedByAnnotatorUserId(@Param("userId") UUID userId);
 }

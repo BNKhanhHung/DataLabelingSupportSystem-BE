@@ -4,6 +4,7 @@ import com.anotation.common.PageResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface DataItemService {
@@ -21,6 +22,9 @@ public interface DataItemService {
     DataItemResponse create(DataItemRequest request);
 
     DataItemResponse updateStatus(UUID id, DataItemStatus status);
+
+    /** Create multiple DataItems at once from a list of URLs. */
+    List<DataItemResponse> bulkCreate(DataItemBulkRequest request);
 
     void delete(UUID id);
 }

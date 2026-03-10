@@ -227,6 +227,15 @@ public class TaskServiceImpl implements TaskService {
         task.setProject(project);
         task.setAnnotator(annotator);
         task.setReviewer(reviewer);
+
+        // Set optional deadline
+        if (request.getDueDate() != null) {
+            if (request.getDueDate().isBefore(java.time.LocalDateTime.now())) {
+                throw new BadRequestException("Due date must be in the future.");
+            }
+            task.setDueDate(request.getDueDate());
+        }
+
         taskRepository.save(task);
 
         // Create TaskItems + update DataItem status → ASSIGNED
@@ -334,6 +343,56 @@ public class TaskServiceImpl implements TaskService {
         task.setStatus(TaskStatus.REVIEWED);
         taskRepository.save(task);
         return toResponse(task);
+    }
+
+    // ── Overdue tasks ────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<TaskResponse> getOverdueTasks(Pageable pageable) {
+        try {
+            return PageResponse.from(
+                    taskRepository.findOverdueTasks(java.time.LocalDateTime.now(), pageable),
+                    this::toResponse);
+        } catch (PropertyReferenceException e) {
+            return PageResponse.from(
+                    taskRepository.findOverdueTasks(java.time.LocalDateTime.now(), safePageable(pageable)),
+                    this::toResponse);
+        }
+    }
+
+    // ── KPI ──────────────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public KpiResponse getAnnotatorKpi(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found: " + userId));
+
+        KpiResponse kpi = new KpiResponse();
+        kpi.setUserId(user.getId());
+        kpi.setUsername(user.getUsername());
+
+        // Task metrics
+        kpi.setTotalTasks(taskRepository.countByAnnotatorId(userId));
+        kpi.setCompletedTasks(
+                taskRepository.countByAnnotatorIdAndStatus(userId, TaskStatus.COMPLETED)
+                        + taskRepository.countByAnnotatorIdAndStatus(userId, TaskStatus.REVIEWED));
+        kpi.setOverdueTasks(
+                taskRepository.countOverdueByAnnotatorId(userId, java.time.LocalDateTime.now()));
+
+        // Annotation metrics
+        kpi.setTotalAnnotations(annotationRepository.countByAnnotatorUserId(userId));
+        kpi.setApprovedCount(annotationRepository.countApprovedByAnnotatorUserId(userId));
+        kpi.setRejectedCount(annotationRepository.countRejectedByAnnotatorUserId(userId));
+
+        // Approval rate
+        long reviewed = kpi.getApprovedCount() + kpi.getRejectedCount();
+        kpi.setApprovalRate(reviewed > 0
+                ? Math.round((double) kpi.getApprovedCount() / reviewed * 10000.0) / 100.0
+                : 0.0);
+
+        return kpi;
     }
 
     // ── Delete ───────────────────────────────────────────────────────────────────

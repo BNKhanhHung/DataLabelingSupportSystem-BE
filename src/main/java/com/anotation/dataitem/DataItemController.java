@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,8 +27,7 @@ public class DataItemController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all data items",
-            description = "Sort hợp lệ: id, status, createdAt, contentUrl (vd: sort=id,asc). Tránh sort=string.")
+    @Operation(summary = "Get all data items", description = "Sort hợp lệ: id, status, createdAt, contentUrl (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<DataItemResponse>> getAll(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(dataItemService.getAll(pageable)); // 200
     }
@@ -39,8 +39,7 @@ public class DataItemController {
     }
 
     @GetMapping("/dataset/{datasetId}")
-    @Operation(summary = "Get all items in a dataset",
-            description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    @Operation(summary = "Get all items in a dataset", description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<DataItemResponse>> getByDataset(
             @PathVariable UUID datasetId,
             @ParameterObject Pageable pageable) {
@@ -48,8 +47,7 @@ public class DataItemController {
     }
 
     @GetMapping("/dataset/{datasetId}/status/{status}")
-    @Operation(summary = "Get items in a dataset filtered by status",
-            description = "Sort hợp lệ: id, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    @Operation(summary = "Get items in a dataset filtered by status", description = "Sort hợp lệ: id, createdAt (vd: sort=id,asc). Tránh sort=string.")
     public ResponseEntity<PageResponse<DataItemResponse>> getByDatasetAndStatus(
             @PathVariable UUID datasetId,
             @PathVariable DataItemStatus status,
@@ -80,6 +78,13 @@ public class DataItemController {
             @PathVariable UUID id,
             @RequestParam DataItemStatus status) {
         return ResponseEntity.ok(dataItemService.updateStatus(id, status)); // 200
+    }
+
+    @PostMapping("/bulk")
+    @Operation(summary = "Create multiple data items at once", description = "Provide a datasetId and a list of contentUrls. Duplicate URLs are skipped.")
+    public ResponseEntity<List<DataItemResponse>> bulkCreate(@Valid @RequestBody DataItemBulkRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(dataItemService.bulkCreate(request)); // 201
     }
 
     @DeleteMapping("/{id}")

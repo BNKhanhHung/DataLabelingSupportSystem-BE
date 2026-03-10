@@ -3,6 +3,7 @@ package com.anotation.task;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +20,9 @@ public class TaskRequest {
 
     @NotEmpty(message = "At least one DataItem must be selected")
     private List<UUID> dataItemIds;
+
+    // Optional: deadline for the task
+    private LocalDateTime dueDate;
 
     public UUID getProjectId() {
         return projectId;
@@ -50,5 +54,13 @@ public class TaskRequest {
 
     public void setDataItemIds(List<UUID> dataItemIds) {
         this.dataItemIds = dataItemIds;
+    }
+
+    public LocalDateTime getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDateTime dueDate) {
+        this.dueDate = dueDate;
     }
 }

@@ -15,6 +15,8 @@ public class TaskResponse {
     private String reviewerUsername;
     private TaskStatus status;
     private List<UUID> dataItemIds;
+    private LocalDateTime dueDate;
+    private boolean overdue;
     private LocalDateTime createdAt;
 
     public UUID getId() {
@@ -87,6 +89,22 @@ public class TaskResponse {
 
     public void setDataItemIds(List<UUID> dataItemIds) {
         this.dataItemIds = dataItemIds;
+    }
+
+    public LocalDateTime getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDateTime dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public boolean isOverdue() {
+        return overdue;
+    }
+
+    public void setOverdue(boolean overdue) {
+        this.overdue = overdue;
     }
 
     public LocalDateTime getCreatedAt() {

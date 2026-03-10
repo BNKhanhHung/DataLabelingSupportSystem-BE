@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -139,6 +141,37 @@ public class DataItemServiceImpl implements DataItemService {
     public void delete(UUID id) {
         findOrThrow(id);
         dataItemRepository.deleteById(id);
+    }
+
+    // ── Bulk create ──────────────────────────────────────────────────────────────
+
+    @Override
+    public List<DataItemResponse> bulkCreate(DataItemBulkRequest request) {
+        Dataset dataset = datasetRepository.findById(request.getDatasetId())
+                .orElseThrow(() -> new NotFoundException(
+                        "Dataset not found: " + request.getDatasetId()));
+
+        List<DataItemResponse> results = new ArrayList<>();
+        for (String url : request.getContentUrls()) {
+            if (url == null || url.isBlank()) {
+                continue; // skip empty URLs
+            }
+            // Skip duplicates silently
+            if (dataItemRepository.existsByContentUrlAndDatasetId(url, request.getDatasetId())) {
+                continue;
+            }
+
+            DataItem item = new DataItem();
+            item.setDataset(dataset);
+            item.setContentUrl(url.trim());
+            results.add(dataItemMapper.toResponse(dataItemRepository.save(item)));
+        }
+
+        if (results.isEmpty()) {
+            throw new BadRequestException("No new data items were created. All URLs may be duplicates or empty.");
+        }
+
+        return results;
     }
 
     // ── Private helpers ─────────────────────────────────────────────────────────

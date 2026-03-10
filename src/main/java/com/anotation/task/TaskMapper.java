@@ -2,6 +2,7 @@ package com.anotation.task;
 
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,6 +14,14 @@ public class TaskMapper {
         response.setId(task.getId());
         response.setStatus(task.getStatus());
         response.setCreatedAt(task.getCreatedAt());
+
+        // Deadline fields
+        response.setDueDate(task.getDueDate());
+        boolean isOverdue = task.getDueDate() != null
+                && LocalDateTime.now().isAfter(task.getDueDate())
+                && task.getStatus() != TaskStatus.COMPLETED
+                && task.getStatus() != TaskStatus.REVIEWED;
+        response.setOverdue(isOverdue);
 
         // Flatten Project
         response.setProjectId(task.getProject().getId());

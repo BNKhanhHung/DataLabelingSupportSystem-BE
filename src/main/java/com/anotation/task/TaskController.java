@@ -102,6 +102,18 @@ public class TaskController {
         return ResponseEntity.ok(taskService.completeReview(id)); // 200
     }
 
+    @GetMapping("/overdue")
+    @Operation(summary = "Get all overdue tasks", description = "Tasks past their due date that are not yet COMPLETED or REVIEWED.")
+    public ResponseEntity<PageResponse<TaskResponse>> getOverdueTasks(@ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(taskService.getOverdueTasks(pageable)); // 200
+    }
+
+    @GetMapping("/kpi/{userId}")
+    @Operation(summary = "Get KPI metrics for a user", description = "Returns task count, annotation accuracy, overdue count for performance evaluation.")
+    public ResponseEntity<KpiResponse> getAnnotatorKpi(@PathVariable UUID userId) {
+        return ResponseEntity.ok(taskService.getAnnotatorKpi(userId)); // 200
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a task")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {

@@ -41,5 +41,11 @@ public interface TaskService {
      */
     TaskResponse completeReview(UUID taskId);
 
+    /** Get all overdue tasks (dueDate passed and not completed). */
+    PageResponse<TaskResponse> getOverdueTasks(Pageable pageable);
+
+    /** Get KPI metrics for a specific user (Annotator performance). */
+    KpiResponse getAnnotatorKpi(UUID userId);
+
     void delete(UUID id);
 }
