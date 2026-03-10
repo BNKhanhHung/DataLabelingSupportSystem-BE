@@ -8,6 +8,7 @@ public class ProjectResponse {
     private UUID id;
     private String name;
     private String description;
+    private ProjectStatus projectStatus;
     private LocalDateTime createdAt;
 
     public UUID getId() {
@@ -32,6 +33,14 @@ public class ProjectResponse {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public ProjectStatus getProjectStatus() {
+        return projectStatus;
+    }
+
+    public void setProjectStatus(ProjectStatus projectStatus) {
+        this.projectStatus = projectStatus;
     }
 
     public LocalDateTime getCreatedAt() {
