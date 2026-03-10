@@ -41,7 +41,7 @@ public class AuthController {
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserCreateRequest request) {
         // Public register luôn tạo USER — chỉ Admin mới set role khác qua POST
         // /api/users
-        request.setSystemRole(null);
+        request.setStatus("ACTIVE");
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(request));
     }
 }
