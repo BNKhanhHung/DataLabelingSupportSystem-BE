@@ -26,6 +26,7 @@ public class ProjectMapper {
         response.setName(project.getName());
         response.setDescription(project.getDescription());
         response.setCreatedAt(project.getCreatedAt());
+        response.setDeadline(project.getDeadline());
         response.setProjectStatus(computeStatus(tasks));
         return response;
     }
@@ -37,6 +38,7 @@ public class ProjectMapper {
         Project project = new Project();
         project.setName(request.getName());
         project.setDescription(request.getDescription());
+        project.setDeadline(request.getDeadline());
         return project;
     }
 
@@ -46,6 +48,7 @@ public class ProjectMapper {
     public void updateEntity(ProjectRequest request, Project project) {
         project.setName(request.getName());
         project.setDescription(request.getDescription());
+        project.setDeadline(request.getDeadline());
     }
 
     // ── Compute ProjectStatus from tasks ────────────────────────────────────────

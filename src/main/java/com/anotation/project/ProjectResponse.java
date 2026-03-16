@@ -10,6 +10,7 @@ public class ProjectResponse {
     private String description;
     private ProjectStatus projectStatus;
     private LocalDateTime createdAt;
+    private LocalDateTime deadline;
 
     public UUID getId() {
         return id;
@@ -49,5 +50,13 @@ public class ProjectResponse {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
     }
 }

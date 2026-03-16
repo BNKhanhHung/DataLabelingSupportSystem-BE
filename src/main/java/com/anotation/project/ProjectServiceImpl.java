@@ -12,6 +12,7 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -72,6 +73,10 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         Project project = projectMapper.toEntity(request);
+        // Nếu không đặt deadline → mặc định 7 ngày sau khi tạo
+        if (project.getDeadline() == null) {
+            project.setDeadline(LocalDateTime.now().plusDays(7));
+        }
         return toResponseWithStatus(projectRepository.save(project));
     }
 

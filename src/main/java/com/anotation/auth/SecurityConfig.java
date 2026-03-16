@@ -68,6 +68,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/user-roles/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
 
+                        // ── Thông báo: mọi user đăng nhập đều xem và đánh dấu đọc ─
+                        .requestMatchers("/api/notifications", "/api/notifications/**").authenticated()
+
                         // ── USER: đánh nhãn, review ─────────────────────────────
                         .requestMatchers("/api/annotations", "/api/annotations/**").authenticated()
                         .requestMatchers("/api/review-feedbacks", "/api/review-feedbacks/**").authenticated()

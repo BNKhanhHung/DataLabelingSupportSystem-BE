@@ -23,6 +23,9 @@ public class Project {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "deadline")
+    private LocalDateTime deadline;
+
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();
@@ -51,5 +54,13 @@ public class Project {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
     }
 }

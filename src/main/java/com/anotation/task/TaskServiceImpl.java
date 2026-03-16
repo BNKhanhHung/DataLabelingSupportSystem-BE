@@ -2,11 +2,13 @@ package com.anotation.task;
 
 import com.anotation.annotation.AnnotationRepository;
 import com.anotation.common.PageResponse;
+import com.anotation.reviewfeedback.ReviewFeedbackRepository;
 import com.anotation.exception.BadRequestException;
 import com.anotation.exception.NotFoundException;
 import com.anotation.dataitem.DataItem;
 import com.anotation.dataitem.DataItemRepository;
 import com.anotation.dataitem.DataItemStatus;
+import com.anotation.notification.NotificationService;
 import com.anotation.project.Project;
 import com.anotation.project.ProjectRepository;
 import com.anotation.user.User;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -38,6 +41,8 @@ public class TaskServiceImpl implements TaskService {
     private final DataItemRepository dataItemRepository;
     private final TaskMapper taskMapper;
     private final AnnotationRepository annotationRepository;
+    private final ReviewFeedbackRepository reviewFeedbackRepository;
+    private final NotificationService notificationService;
 
     public TaskServiceImpl(TaskRepository taskRepository,
             TaskItemRepository taskItemRepository,
@@ -46,7 +51,9 @@ public class TaskServiceImpl implements TaskService {
             UserRoleRepository userRoleRepository,
             DataItemRepository dataItemRepository,
             TaskMapper taskMapper,
-            AnnotationRepository annotationRepository) {
+            AnnotationRepository annotationRepository,
+            ReviewFeedbackRepository reviewFeedbackRepository,
+            NotificationService notificationService) {
         this.taskRepository = taskRepository;
         this.taskItemRepository = taskItemRepository;
         this.projectRepository = projectRepository;
@@ -55,6 +62,8 @@ public class TaskServiceImpl implements TaskService {
         this.dataItemRepository = dataItemRepository;
         this.taskMapper = taskMapper;
         this.annotationRepository = annotationRepository;
+        this.reviewFeedbackRepository = reviewFeedbackRepository;
+        this.notificationService = notificationService;
     }
 
     // ── Read operations ──────────────────────────────────────────────────────────
@@ -228,12 +237,15 @@ public class TaskServiceImpl implements TaskService {
         task.setAnnotator(annotator);
         task.setReviewer(reviewer);
 
-        // Set optional deadline
+        // Set deadline: nếu có gửi lên thì dùng, không thì mặc định 24h sau khi tạo
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
         if (request.getDueDate() != null) {
-            if (request.getDueDate().isBefore(java.time.LocalDateTime.now())) {
+            if (request.getDueDate().isBefore(now)) {
                 throw new BadRequestException("Due date must be in the future.");
             }
             task.setDueDate(request.getDueDate());
+        } else {
+            task.setDueDate(now.plusHours(24));
         }
 
         taskRepository.save(task);
@@ -257,6 +269,11 @@ public class TaskServiceImpl implements TaskService {
         task.setStatus(TaskStatus.IN_PROGRESS);
         taskRepository.save(task);
 
+        // Thông báo chỉ cho Annotator khi task được phân công. Reviewer chỉ nhận thông báo khi annotator submit (SUBMITTED).
+        String projectName = task.getProject().getName();
+        notificationService.create(annotatorId, "TASK_ASSIGNED", "Task mới được phân công",
+                "Bạn có task mới trong dự án \"" + projectName + "\".", "TASK", task.getId());
+
         return taskMapper.toResponse(task, dataItemIds);
     }
 
@@ -266,6 +283,21 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse updateStatus(UUID id, TaskStatus status) {
         Task task = findOrThrow(id);
         task.setStatus(status);
+        taskRepository.save(task);
+        String msg = "Manager đã cập nhật trạng thái task thành \"" + status + "\".";
+        notificationService.create(task.getAnnotator().getId(), "TASK_STATUS_UPDATED", "Trạng thái task đã thay đổi", msg, "TASK", id);
+        // Reviewer chỉ nhận thông báo khi trạng thái chuyển sang SUBMITTED (annotator đã gán nhãn xong và nộp)
+        if (status == TaskStatus.SUBMITTED && !task.getReviewer().getId().equals(task.getAnnotator().getId())) {
+            notificationService.create(task.getReviewer().getId(), "TASK_STATUS_UPDATED", "Task đã được nộp để review",
+                    "Task trong dự án \"" + task.getProject().getName() + "\" đã được nộp. Vui lòng review.", "TASK", id);
+        }
+        return toResponse(task);
+    }
+
+    @Override
+    public TaskResponse updateDueDate(UUID id, java.time.LocalDateTime dueDate) {
+        Task task = findOrThrow(id);
+        task.setDueDate(dueDate);
         taskRepository.save(task);
         return toResponse(task);
     }
@@ -298,6 +330,10 @@ public class TaskServiceImpl implements TaskService {
         // Chuyển trạng thái → SUBMITTED
         task.setStatus(TaskStatus.SUBMITTED);
         taskRepository.save(task);
+
+        notificationService.create(task.getReviewer().getId(), "TASK_STATUS_UPDATED", "Task đã được nộp để review",
+                "Annotator đã nộp task trong dự án \"" + task.getProject().getName() + "\". Vui lòng review.", "TASK", taskId);
+
         return toResponse(task);
     }
 
@@ -336,12 +372,21 @@ public class TaskServiceImpl implements TaskService {
             // Có annotation bị từ chối → task DENIED (Annotator sửa lại)
             task.setStatus(TaskStatus.DENIED);
             taskRepository.save(task);
+            notificationService.create(task.getAnnotator().getId(), "TASK_STATUS_UPDATED", "Task cần chỉnh sửa",
+                    "Reviewer đã từ chối một số nhãn. Vui lòng chỉnh sửa và nộp lại.", "TASK", taskId);
             return toResponse(task);
         }
 
-        // 5. Tất cả APPROVED → gửi cho Manager
+        // 5. Tất cả APPROVED → gửi thông báo cho Annotator và cho Manager(s)
         task.setStatus(TaskStatus.REVIEWED);
         taskRepository.save(task);
+        String projectName = task.getProject().getName();
+        notificationService.create(task.getAnnotator().getId(), "TASK_STATUS_UPDATED", "Task đã được review xong",
+                "Task trong dự án \"" + projectName + "\" đã được reviewer duyệt.", "TASK", taskId);
+        for (User manager : userRepository.findBySystemRoleIn(Set.of(SystemRole.MANAGER, SystemRole.ADMIN))) {
+            notificationService.create(manager.getId(), "TASK_STATUS_UPDATED", "Task đã được review xong",
+                    "Reviewer đã hoàn tất review task trong dự án \"" + projectName + "\". Bạn có thể xem và xác nhận.", "TASK", taskId);
+        }
         return toResponse(task);
     }
 
@@ -399,7 +444,14 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void delete(UUID id) {
-        findOrThrow(id);
+        Task task = findOrThrow(id);
+        UUID taskId = task.getId();
+        // Xóa theo thứ tự phụ thuộc: review_feedbacks → annotations → task_items → task
+        reviewFeedbackRepository.findByTaskId(taskId, Pageable.unpaged()).getContent()
+                .forEach(reviewFeedbackRepository::delete);
+        annotationRepository.findByTaskId(taskId, Pageable.unpaged()).getContent()
+                .forEach(annotationRepository::delete);
+        taskItemRepository.findByTaskId(taskId).forEach(taskItemRepository::delete);
         taskRepository.deleteById(id);
     }
 

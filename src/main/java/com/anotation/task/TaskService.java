@@ -3,6 +3,7 @@ package com.anotation.task;
 import com.anotation.common.PageResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +29,9 @@ public interface TaskService {
     TaskResponse create(TaskRequest request);
 
     TaskResponse updateStatus(UUID id, TaskStatus status);
+
+    /** Update task deadline (due date). Pass null to clear. */
+    TaskResponse updateDueDate(UUID id, LocalDateTime dueDate);
 
     /**
      * Annotator nộp task đã gán nhãn xong → chuyển sang SUBMITTED để Reviewer kiểm

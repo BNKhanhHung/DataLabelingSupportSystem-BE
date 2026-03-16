@@ -90,6 +90,14 @@ public class TaskController {
         return ResponseEntity.ok(taskService.updateStatus(id, status)); // 200
     }
 
+    @PatchMapping("/{id}/due-date")
+    @Operation(summary = "Update task deadline (due date). Send dueDate: null to clear.")
+    public ResponseEntity<TaskResponse> updateDueDate(
+            @PathVariable UUID id,
+            @RequestBody UpdateTaskDueDateRequest request) {
+        return ResponseEntity.ok(taskService.updateDueDate(id, request != null ? request.getDueDate() : null)); // 200
+    }
+
     @PatchMapping("/{id}/submit")
     @Operation(summary = "Annotator submits task for review", description = "Chuyển task từ IN_PROGRESS → SUBMITTED. Yêu cầu tất cả items đã được gán nhãn.")
     public ResponseEntity<TaskResponse> submitForReview(@PathVariable UUID id) {

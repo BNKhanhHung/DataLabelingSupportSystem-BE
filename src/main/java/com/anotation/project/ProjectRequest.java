@@ -3,6 +3,8 @@ package com.anotation.project;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDateTime;
+
 public class ProjectRequest {
 
     @NotBlank(message = "Project name is required")
@@ -11,6 +13,8 @@ public class ProjectRequest {
 
     @Size(max = 500, message = "Description must not exceed 500 characters")
     private String description;
+
+    private LocalDateTime deadline;
 
     public String getName() {
         return name;
@@ -26,5 +30,13 @@ public class ProjectRequest {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public LocalDateTime getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
     }
 }

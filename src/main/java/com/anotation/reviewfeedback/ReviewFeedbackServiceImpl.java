@@ -172,15 +172,12 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
             dataItemRepository.save(dataItem);
 
         } else {
-            // REJECTED → Task chuyển sang DENIED
+            // REJECTED → chỉ cập nhật annotation và dataItem. Trạng thái task chỉ đổi khi reviewer hoàn tất review (complete-review).
             annotation.setStatus(AnnotationStatus.REJECTED);
             annotationRepository.save(annotation);
 
             dataItem.setStatus(DataItemStatus.ASSIGNED);
             dataItemRepository.save(dataItem);
-
-            task.setStatus(TaskStatus.DENIED);
-            taskRepository.save(task);
         }
 
         return reviewMapper.toResponse(feedback);

@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -14,4 +16,6 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     Page<Project> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
     boolean existsByNameAndIdNot(String name, UUID id);
+
+    List<Project> findByDeadlineIsNotNullAndDeadlineBefore(LocalDateTime deadline);
 }
