@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * Dataset API: CRUD dataset theo project. Data items thuộc dataset; phân công task chọn data items từ dataset (status NEW).
+ * GET /, /{id}, /project/{projectId}; POST /; PUT /{id}; DELETE /{id}.
+ */
 @RestController
 @RequestMapping("/api/datasets")
 @Tag(name = "Dataset", description = "Dataset management APIs")

@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * ReviewFeedback API: reviewer gửi duyệt/từ chối từng annotation (POST body: annotationId, reviewerId, status, comment). Trạng thái task chỉ đổi khi hoàn tất review (TaskService.completeReview).
+ * GET /, /{id}, /task/{taskId}, /reviewer/{reviewerId}; POST / (submit review); DELETE /{id}.
+ */
 @RestController
 @RequestMapping("/api/review-feedbacks")
 @Tag(name = "ReviewFeedback", description = "Review feedback APIs")

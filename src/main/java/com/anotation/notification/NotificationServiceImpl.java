@@ -104,26 +104,35 @@ public class NotificationServiceImpl implements NotificationService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime since = now.minusHours(OVERDUE_NOTIFICATION_COOLDOWN_HOURS);
 
-        // Overdue tasks: notify annotator and reviewer
+        // Overdue tasks: notify annotator, reviewer, và manager/admin
+        List<User> managers = userRepository.findBySystemRoleIn(Set.of(SystemRole.MANAGER, SystemRole.ADMIN));
         List<Task> overdueTasks = taskRepository.findOverdueTasks(now, PageRequest.of(0, 500, Sort.unsorted())).getContent();
         for (Task task : overdueTasks) {
             String projectName = task.getProject() != null ? task.getProject().getName() : "N/A";
-            String msg = "Task thuộc project \"" + projectName + "\" đã quá hạn.";
+            String msg = "Task thuộc project \"" + projectName + "\" đã quá hạn (annotator chưa hoàn thành).";
             UUID taskId = task.getId();
 
+            // Annotator
             UUID annotatorId = task.getAnnotator().getId();
             if (!notificationRepository.existsByUserIdAndTypeAndRelatedEntityIdAndCreatedAtAfter(annotatorId, TYPE_OVERDUE_TASK, taskId, since)) {
                 create(annotatorId, TYPE_OVERDUE_TASK, "Task quá hạn", msg, ENTITY_TASK, taskId);
             }
+            // Reviewer (nếu khác annotator)
             UUID reviewerId = task.getReviewer().getId();
             if (!reviewerId.equals(annotatorId) && !notificationRepository.existsByUserIdAndTypeAndRelatedEntityIdAndCreatedAtAfter(reviewerId, TYPE_OVERDUE_TASK, taskId, since)) {
                 create(reviewerId, TYPE_OVERDUE_TASK, "Task quá hạn", msg, ENTITY_TASK, taskId);
+            }
+            // Manager và Admin
+            for (User manager : managers) {
+                UUID userId = manager.getId();
+                if (!notificationRepository.existsByUserIdAndTypeAndRelatedEntityIdAndCreatedAtAfter(userId, TYPE_OVERDUE_TASK, taskId, since)) {
+                    create(userId, TYPE_OVERDUE_TASK, "Task quá hạn", msg, ENTITY_TASK, taskId);
+                }
             }
         }
 
         // Overdue projects: notify managers and admins
         List<Project> overdueProjects = projectRepository.findByDeadlineIsNotNullAndDeadlineBefore(now);
-        List<User> managers = userRepository.findBySystemRoleIn(Set.of(SystemRole.MANAGER, SystemRole.ADMIN));
         for (Project project : overdueProjects) {
             String msg = "Project \"" + project.getName() + "\" đã quá hạn.";
             UUID projectId = project.getId();

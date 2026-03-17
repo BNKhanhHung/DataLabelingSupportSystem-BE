@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * UserRole API: gán role (Manager/Annotator/Reviewer) cho user trong project. GET /, /{id}, /user/{userId}; POST / (assign); DELETE /{id}.
+ */
 @RestController
 @RequestMapping("/api/user-roles")
 @Tag(name = "UserRole", description = "User-Role-Project assignment APIs")

@@ -41,6 +41,10 @@ import java.util.UUID;
 // CODE MỚI (refactored)
 // ============================================================
 
+/**
+ * User API: danh sách user, lấy theo id/me, tạo/sửa/xóa user, đổi mật khẩu (PATCH /me/password).
+ * GET /, /{id}, /me; POST /; PUT /{id}; PATCH /me/password; DELETE /{id}.
+ */
 @RestController
 @RequestMapping("/api/users")
 @Tag(name = "User", description = "User management APIs")

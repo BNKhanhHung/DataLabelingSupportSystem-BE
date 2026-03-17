@@ -15,6 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * DataItem API: CRUD data item, lấy theo dataset (và status), upload file, bulk tạo từ URL. Ảnh phục vụ qua /api/uploads/{folder}/{filename}.
+ * GET /, /{id}, /dataset/{id}, /dataset/{id}/status/{status}; POST /, /upload (multipart), /bulk; PATCH /{id}/status; DELETE /{id}.
+ */
 @RestController
 @RequestMapping("/api/data-items")
 @Tag(name = "DataItem", description = "DataItem management APIs")

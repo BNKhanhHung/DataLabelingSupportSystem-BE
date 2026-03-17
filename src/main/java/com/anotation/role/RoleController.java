@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * Role API (project-level: Manager/Annotator/Reviewer): CRUD role, gán vào user qua UserRole. GET /, /{id}; POST /; PUT /{id}; DELETE /{id}.
+ */
 @RestController
 @RequestMapping("/api/roles")
 @Tag(name = "Role", description = "Role management APIs")

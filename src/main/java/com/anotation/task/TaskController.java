@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Task API: CRUD task, lấy theo project/annotator/reviewer, cập nhật status/due-date, annotator nộp (submit), reviewer hoàn tất (complete-review), xóa task (cascade review_feedbacks → annotations → task_items).
+ * GET /, /{id}, /{id}/items, /project/{id}, /annotator/{id}, /reviewer/{id}, /search, /overdue, /kpi/{userId}; POST /; PATCH /{id}/status, /{id}/due-date, /{id}/submit, /{id}/complete-review; DELETE /{id}.
+ */
 @RestController
 @RequestMapping("/api/tasks")
 @Tag(name = "Task", description = "Task management APIs")

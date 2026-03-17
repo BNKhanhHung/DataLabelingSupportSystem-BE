@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * Project API: CRUD dự án, tìm theo tên. Response có status (OPEN/IN_PROGRESS/OVERDUE/COMPLETED) và deadline.
+ * GET /, /{id}, /search; POST /; PUT /{id}; DELETE /{id}.
+ */
 @RestController
 @RequestMapping("/api/projects")
 @Tag(name = "Project", description = "Project management APIs")

@@ -16,6 +16,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Phục vụ file tĩnh đã upload (ảnh/data item). Frontend dùng baseUrl + /api/uploads/{folder}/{filename} để hiển thị ảnh (project-detail, annotator-label, reviewer-task-review).
+ * GET /{folder}/{filename} → trả file (content-type theo loại file).
+ */
 @RestController
 @RequestMapping("/api/uploads")
 public class UploadController {

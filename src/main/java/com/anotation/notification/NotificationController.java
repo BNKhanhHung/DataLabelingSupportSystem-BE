@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Notification API: danh sách thông báo, đếm chưa đọc, đánh dấu đọc (1 hoặc tất cả), trigger kiểm tra overdue (tạo thông báo task/project quá hạn).
+ * GET /, /unread-count; PATCH /{id}/read, /read-all; POST /check-overdue.
+ */
 @RestController
 @RequestMapping("/api/notifications")
 @Tag(name = "Notification", description = "User notifications APIs")

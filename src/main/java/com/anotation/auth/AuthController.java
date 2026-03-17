@@ -11,11 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Auth Controller — Login and public register (for testing).
- *
- * Admin creates user accounts via POST /api/users (requires ADMIN).
- * POST /api/auth/register is public, for testing only — no authorization
- * required.
+ * Auth API: đăng nhập (JWT) và đăng ký công khai (chỉ tạo USER). Frontend gọi POST /api/auth/login (login.html); register dùng POST /api/auth/register. User khác do Admin tạo qua POST /api/users.
+ * POST /login (username/email + password → token, user); POST /register (username, email, password → user).
  */
 @RestController
 @RequestMapping("/api/auth")

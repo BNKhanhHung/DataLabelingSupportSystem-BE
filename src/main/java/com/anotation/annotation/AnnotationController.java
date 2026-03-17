@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * Annotation API: annotator gửi nhãn cho TaskItem (POST), sửa nội dung khi REJECTED (PATCH /{id}/content). Lấy theo task.
+ * GET /, /{id}, /task/{taskId}; POST / (taskItemId, content = label name); PATCH /{id}/content; DELETE /{id}.
+ */
 @RestController
 @RequestMapping("/api/annotations")
 @Tag(name = "Annotation", description = "Annotation submission APIs")
