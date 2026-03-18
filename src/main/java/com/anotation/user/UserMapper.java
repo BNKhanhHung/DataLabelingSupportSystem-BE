@@ -15,6 +15,7 @@ public class UserMapper {
                 ? user.getSystemRole()
                 : SystemRole.USER;
         response.setSystemRole(systemRole.name());
+        response.setWarnings(user.getWarnings());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
         return response;

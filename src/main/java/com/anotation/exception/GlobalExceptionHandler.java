@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex) {
         String msg = ex.getMessage() != null ? ex.getMessage() : "Database constraint violation.";
         if (msg.contains("tasks_status_check") || msg.contains("tasks") && msg.contains("status")) {
-            msg = "Trạng thái task không hợp lệ. Nếu dùng trạng thái DENIED/SUBMITTED/REVIEWED, chạy migration SQL thêm các giá trị này vào constraint bảng tasks (xem migrate_tasks_status_denied.sql).";
+            msg = "Trạng thái task không hợp lệ. Nếu dùng trạng thái DENIED/SUBMITTED/REVIEWED/OVERDUE, chạy migration SQL thêm các giá trị này vào constraint bảng tasks (xem migrate_tasks_status_denied.sql).";
         }
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),

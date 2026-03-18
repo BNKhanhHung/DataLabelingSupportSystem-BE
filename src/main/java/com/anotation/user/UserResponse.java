@@ -10,6 +10,7 @@ public class UserResponse {
     private String email;
     private String status;
     private String systemRole;
+    private int warnings;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -51,6 +52,14 @@ public class UserResponse {
 
     public void setSystemRole(String systemRole) {
         this.systemRole = systemRole;
+    }
+
+    public int getWarnings() {
+        return warnings;
+    }
+
+    public void setWarnings(int warnings) {
+        this.warnings = warnings;
     }
 
     public Instant getCreatedAt() {

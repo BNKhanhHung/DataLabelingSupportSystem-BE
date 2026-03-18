@@ -141,6 +141,7 @@ public class AnnotationServiceImpl implements AnnotationService {
         dataItemRepository.save(dataItem);
 
         // 8. Task status → IN_PROGRESS (on first annotation submission)
+        // Nếu task đã OVERDUE thì giữ nguyên OVERDUE để phản ánh làm trễ.
         if (task.getStatus() == TaskStatus.OPEN) {
             task.setStatus(TaskStatus.IN_PROGRESS);
             taskRepository.save(task);

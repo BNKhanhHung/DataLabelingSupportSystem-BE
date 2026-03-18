@@ -14,12 +14,13 @@ public interface TaskItemRepository extends JpaRepository<TaskItem, UUID> {
         List<TaskItem> findByTaskId(UUID taskId);
 
         // Check if a DataItem is already in an ACTIVE task (OPEN, IN_PROGRESS,
-        // SUBMITTED, REVIEWED)
+        // SUBMITTED, REVIEWED, OVERDUE)
         @Query("""
                         SELECT COUNT(ti) > 0 FROM TaskItem ti
                         WHERE ti.dataItem.id = :dataItemId
                         AND ti.task.status IN (com.anotation.task.TaskStatus.OPEN,
                                                com.anotation.task.TaskStatus.IN_PROGRESS,
+                                               com.anotation.task.TaskStatus.OVERDUE,
                                                com.anotation.task.TaskStatus.SUBMITTED,
                                                com.anotation.task.TaskStatus.REVIEWED)
                         """)

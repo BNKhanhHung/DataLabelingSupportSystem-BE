@@ -116,6 +116,10 @@ public class NotificationServiceImpl implements NotificationService {
             UUID annotatorId = task.getAnnotator().getId();
             if (!notificationRepository.existsByUserIdAndTypeAndRelatedEntityIdAndCreatedAtAfter(annotatorId, TYPE_OVERDUE_TASK, taskId, since)) {
                 create(annotatorId, TYPE_OVERDUE_TASK, "Task quá hạn", msg, ENTITY_TASK, taskId);
+                // Ghi nhận số lần trễ deadline (tăng 1 lần mỗi task mỗi 24h để tránh spam)
+                User annotator = task.getAnnotator();
+                annotator.setWarnings(annotator.getWarnings() + 1);
+                userRepository.save(annotator);
             }
             // Reviewer (nếu khác annotator)
             UUID reviewerId = task.getReviewer().getId();

@@ -35,6 +35,9 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "warnings", nullable = false)
+    private int warnings = 0;
+
     @PrePersist
     public void onCreate() {
         Instant now = Instant.now();
@@ -100,5 +103,13 @@ public class User {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public int getWarnings() {
+        return warnings;
+    }
+
+    public void setWarnings(int warnings) {
+        this.warnings = warnings;
     }
 }

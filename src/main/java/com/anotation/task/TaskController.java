@@ -120,6 +120,13 @@ public class TaskController {
         return ResponseEntity.ok(taskService.getOverdueTasks(pageable)); // 200
     }
 
+    @PostMapping("/mark-overdue")
+    @Operation(summary = "Mark overdue tasks", description = "Chuyển các task quá hạn (OPEN/IN_PROGRESS/DENIED) sang OVERDUE. Dùng khi muốn chạy ngay thay vì chờ scheduler.")
+    public ResponseEntity<Void> markOverdueNow() {
+        taskService.markOverdueTasks();
+        return ResponseEntity.noContent().build(); // 204
+    }
+
     @GetMapping("/kpi/{userId}")
     @Operation(summary = "Get KPI metrics for a user", description = "Returns task count, annotation accuracy, overdue count for performance evaluation.")
     public ResponseEntity<KpiResponse> getAnnotatorKpi(@PathVariable UUID userId) {

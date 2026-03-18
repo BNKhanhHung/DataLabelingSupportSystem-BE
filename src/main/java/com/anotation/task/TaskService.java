@@ -48,6 +48,9 @@ public interface TaskService {
     /** Get all overdue tasks (dueDate passed and not completed). */
     PageResponse<TaskResponse> getOverdueTasks(Pageable pageable);
 
+    /** Đánh dấu task quá hạn sang OVERDUE (OPEN/IN_PROGRESS/DENIED). */
+    void markOverdueTasks();
+
     /** Get KPI metrics for a specific user (Annotator performance). */
     KpiResponse getAnnotatorKpi(UUID userId);
 

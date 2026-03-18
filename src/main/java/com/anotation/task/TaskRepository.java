@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -41,6 +42,17 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
         AND t.status NOT IN (com.anotation.task.TaskStatus.COMPLETED, com.anotation.task.TaskStatus.REVIEWED)
       """)
   Page<Task> findOverdueTasks(@Param("now") LocalDateTime now, Pageable pageable);
+
+  /** Tasks quá hạn để chuyển trạng thái sang OVERDUE (chỉ các trạng thái chưa nộp: OPEN/IN_PROGRESS/DENIED). */
+  @Query("""
+      SELECT t FROM Task t
+      WHERE t.dueDate IS NOT NULL
+        AND t.dueDate < :now
+        AND t.status IN (com.anotation.task.TaskStatus.OPEN,
+                         com.anotation.task.TaskStatus.IN_PROGRESS,
+                         com.anotation.task.TaskStatus.DENIED)
+      """)
+  List<Task> findTasksToMarkOverdue(@Param("now") LocalDateTime now, Pageable pageable);
 
   // ── KPI count queries ────────────────────────────────────────────────────────
 

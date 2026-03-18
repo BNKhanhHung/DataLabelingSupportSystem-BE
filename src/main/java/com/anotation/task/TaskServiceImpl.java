@@ -322,8 +322,10 @@ public class TaskServiceImpl implements TaskService {
             throw new BadRequestException("Only the assigned annotator can submit this task for review.");
         }
 
-        // 2. Task phải đang IN_PROGRESS hoặc DENIED (nộp lại sau khi sửa)
-        if (task.getStatus() != TaskStatus.IN_PROGRESS && task.getStatus() != TaskStatus.DENIED) {
+        // 2. Task phải đang IN_PROGRESS hoặc DENIED hoặc OVERDUE (nộp lại sau khi sửa / nộp trễ)
+        if (task.getStatus() != TaskStatus.IN_PROGRESS
+                && task.getStatus() != TaskStatus.DENIED
+                && task.getStatus() != TaskStatus.OVERDUE) {
             throw new BadRequestException(
                     "Task must be IN_PROGRESS or DENIED to submit for review. Current status: " + task.getStatus());
         }
@@ -412,6 +414,17 @@ public class TaskServiceImpl implements TaskService {
                     taskRepository.findOverdueTasks(java.time.LocalDateTime.now(), safePageable(pageable)),
                     this::toResponse);
         }
+    }
+
+    @Override
+    public void markOverdueTasks() {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        List<Task> tasks = taskRepository.findTasksToMarkOverdue(now, PageRequest.of(0, 500, Sort.unsorted()));
+        if (tasks.isEmpty()) return;
+        for (Task t : tasks) {
+            t.setStatus(TaskStatus.OVERDUE);
+        }
+        taskRepository.saveAll(tasks);
     }
 
     // ── KPI ──────────────────────────────────────────────────────────────────────
