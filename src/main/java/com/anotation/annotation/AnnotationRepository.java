@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -71,4 +72,8 @@ public interface AnnotationRepository extends JpaRepository<Annotation, UUID> {
                         AND a.status = com.anotation.annotation.AnnotationStatus.REJECTED
                         """)
         long countRejectedByAnnotatorUserId(@Param("userId") UUID userId);
+
+        /** Lấy (dataItemId, content) cho các data item có annotation. Dùng cho export. */
+        @Query("SELECT ti.dataItem.id, a.content FROM Annotation a JOIN a.taskItem ti WHERE ti.dataItem.id IN :dataItemIds")
+        List<Object[]> findContentByDataItemIdIn(@Param("dataItemIds") List<UUID> dataItemIds);
 }

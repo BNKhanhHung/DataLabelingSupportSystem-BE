@@ -11,6 +11,9 @@ spring:
     username: ${SUPABASE_DB_USERNAME:postgres.wqillyzrmdbjvxfnckhx}
     password: ${SUPABASE_DB_PASSWORD:SofwareDevelopemnt}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 2
+      minimum-idle: 1
   servlet:
     multipart:
       max-file-size: ${MAX_FILE_SIZE:10MB}

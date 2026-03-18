@@ -1,5 +1,6 @@
 package com.anotation.dataitem;
 
+import com.anotation.annotation.AnnotationRepository;
 import com.anotation.common.PageResponse;
 import com.anotation.exception.BadRequestException;
 import com.anotation.exception.DuplicateException;
@@ -16,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -27,15 +30,18 @@ public class DataItemServiceImpl implements DataItemService {
     private final DatasetRepository datasetRepository;
     private final DataItemMapper dataItemMapper;
     private final SupabaseStorageService storageService;
+    private final AnnotationRepository annotationRepository;
 
     public DataItemServiceImpl(DataItemRepository dataItemRepository,
             DatasetRepository datasetRepository,
             DataItemMapper dataItemMapper,
-            SupabaseStorageService storageService) {
+            SupabaseStorageService storageService,
+            AnnotationRepository annotationRepository) {
         this.dataItemRepository = dataItemRepository;
         this.datasetRepository = datasetRepository;
         this.dataItemMapper = dataItemMapper;
         this.storageService = storageService;
+        this.annotationRepository = annotationRepository;
     }
 
     @Override
@@ -135,6 +141,75 @@ public class DataItemServiceImpl implements DataItemService {
         DataItem item = findOrThrow(id);
         item.setStatus(status);
         return dataItemMapper.toResponse(dataItemRepository.save(item));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DataItemResponse> getLabeledByProject(UUID projectId) {
+        var seen = new java.util.HashSet<UUID>();
+        var merged = new ArrayList<DataItem>();
+        // 1) Theo status ANNOTATED (query riêng, tránh lỗi IN collection)
+        for (DataItem d : dataItemRepository.findByDatasetProjectIdAndStatusAnnotated(projectId)) {
+            if (seen.add(d.getId())) merged.add(d);
+        }
+        // 2) Theo status REVIEWED
+        for (DataItem d : dataItemRepository.findByDatasetProjectIdAndStatusReviewed(projectId)) {
+            if (seen.add(d.getId())) merged.add(d);
+        }
+        // 3) Có ít nhất một annotation trong project (phòng status chưa cập nhật đúng)
+        for (DataItem d : dataItemRepository.findByProjectIdAndHasAnnotation(projectId)) {
+            if (seen.add(d.getId())) merged.add(d);
+        }
+        merged.sort((a, b) -> (a.getCreatedAt() != null && b.getCreatedAt() != null)
+                ? a.getCreatedAt().compareTo(b.getCreatedAt())
+                : 0);
+        return merged.stream().map(dataItemMapper::toResponse).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DataItemExportResponse> getLabeledByProjectForExport(UUID projectId) {
+        var seen = new java.util.HashSet<UUID>();
+        var merged = new ArrayList<DataItem>();
+        for (DataItem d : dataItemRepository.findByDatasetProjectIdAndStatusAnnotated(projectId)) {
+            if (seen.add(d.getId())) merged.add(d);
+        }
+        for (DataItem d : dataItemRepository.findByDatasetProjectIdAndStatusReviewed(projectId)) {
+            if (seen.add(d.getId())) merged.add(d);
+        }
+        for (DataItem d : dataItemRepository.findByProjectIdAndHasAnnotation(projectId)) {
+            if (seen.add(d.getId())) merged.add(d);
+        }
+        merged.sort((a, b) -> (a.getCreatedAt() != null && b.getCreatedAt() != null)
+                ? a.getCreatedAt().compareTo(b.getCreatedAt())
+                : 0);
+
+        if (merged.isEmpty()) return List.of();
+
+        List<UUID> ids = merged.stream().map(DataItem::getId).toList();
+        List<Object[]> rows = annotationRepository.findContentByDataItemIdIn(ids);
+        Map<UUID, String> idToLabel = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            UUID dataItemId = (UUID) row[0];
+            String content = row[1] != null ? row[1].toString() : "";
+            idToLabel.putIfAbsent(dataItemId, content);
+        }
+
+        List<DataItemExportResponse> result = new ArrayList<>();
+        for (DataItem d : merged) {
+            DataItemResponse base = dataItemMapper.toResponse(d);
+            DataItemExportResponse ex = new DataItemExportResponse();
+            ex.setId(base.getId());
+            ex.setDatasetId(base.getDatasetId());
+            ex.setDatasetName(base.getDatasetName());
+            ex.setContentUrl(base.getContentUrl());
+            ex.setMetadata(base.getMetadata());
+            ex.setStatus(base.getStatus());
+            ex.setCreatedAt(base.getCreatedAt());
+            ex.setLabel(idToLabel.getOrDefault(d.getId(), ""));
+            result.add(ex);
+        }
+        return result;
     }
 
     @Override

@@ -63,7 +63,7 @@ public class TaskController {
     }
 
     @GetMapping("/reviewer/{reviewerId}")
-    @Operation(summary = "Get all tasks assigned to a reviewer", description = "Sort hợp lệ: id, status, createdAt (vd: sort=id,asc). Tránh sort=string.")
+    @Operation(summary = "Task cần review (SUBMITTED)", description = "Chỉ task đã nộp (SUBMITTED), chờ reviewer. Sort: id, status, createdAt.")
     public ResponseEntity<PageResponse<TaskResponse>> getByReviewer(
             @PathVariable UUID reviewerId,
             @ParameterObject Pageable pageable) {

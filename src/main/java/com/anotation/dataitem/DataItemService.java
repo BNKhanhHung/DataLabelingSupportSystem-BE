@@ -26,5 +26,11 @@ public interface DataItemService {
     /** Create multiple DataItems at once from a list of URLs. */
     List<DataItemResponse> bulkCreate(DataItemBulkRequest request);
 
+    /** Xuất data items đã gắn nhãn (ANNOTATED, REVIEWED) của một project. */
+    List<DataItemResponse> getLabeledByProject(UUID projectId);
+
+    /** Xuất data items đã gắn nhãn kèm cột nhãn (annotation content) cho export CSV/JSON. */
+    List<DataItemExportResponse> getLabeledByProjectForExport(UUID projectId);
+
     void delete(UUID id);
 }

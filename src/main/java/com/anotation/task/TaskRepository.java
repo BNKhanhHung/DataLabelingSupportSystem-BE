@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.UUID;
 
 @Repository
@@ -17,6 +18,12 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
   Page<Task> findByAnnotatorId(UUID annotatorId, Pageable pageable);
 
   Page<Task> findByReviewerId(UUID reviewerId, Pageable pageable);
+
+  /** Task được giao cho annotator, loại trừ trạng thái COMPLETED và REVIEWED (chỉ hiện task còn cần làm). */
+  Page<Task> findByAnnotatorIdAndStatusNotIn(UUID annotatorId, Collection<TaskStatus> statuses, Pageable pageable);
+
+  /** Task cần review: chỉ trạng thái SUBMITTED (annotator đã nộp, chờ reviewer). */
+  Page<Task> findByReviewerIdAndStatus(UUID reviewerId, TaskStatus status, Pageable pageable);
 
   @Query("""
       SELECT t FROM Task t

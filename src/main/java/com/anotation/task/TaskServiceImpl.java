@@ -125,14 +125,20 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+    /** Trạng thái đã xong: không hiện trong danh sách "task được giao" của user. */
+    private static final List<TaskStatus> EXCLUDED_STATUSES_FOR_ASSIGNED =
+            List.of(TaskStatus.COMPLETED, TaskStatus.REVIEWED);
+
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getByAnnotator(UUID annotatorId, Pageable pageable) {
         try {
-            return PageResponse.from(taskRepository.findByAnnotatorId(annotatorId, pageable),
+            return PageResponse.from(
+                    taskRepository.findByAnnotatorIdAndStatusNotIn(annotatorId, EXCLUDED_STATUSES_FOR_ASSIGNED, pageable),
                     this::toResponse);
         } catch (PropertyReferenceException e) {
-            return PageResponse.from(taskRepository.findByAnnotatorId(annotatorId, safePageable(pageable)),
+            return PageResponse.from(
+                    taskRepository.findByAnnotatorIdAndStatusNotIn(annotatorId, EXCLUDED_STATUSES_FOR_ASSIGNED, safePageable(pageable)),
                     this::toResponse);
         }
     }
@@ -141,10 +147,12 @@ public class TaskServiceImpl implements TaskService {
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getByReviewer(UUID reviewerId, Pageable pageable) {
         try {
-            return PageResponse.from(taskRepository.findByReviewerId(reviewerId, pageable),
+            return PageResponse.from(
+                    taskRepository.findByReviewerIdAndStatus(reviewerId, TaskStatus.SUBMITTED, pageable),
                     this::toResponse);
         } catch (PropertyReferenceException e) {
-            return PageResponse.from(taskRepository.findByReviewerId(reviewerId, safePageable(pageable)),
+            return PageResponse.from(
+                    taskRepository.findByReviewerIdAndStatus(reviewerId, TaskStatus.SUBMITTED, safePageable(pageable)),
                     this::toResponse);
         }
     }

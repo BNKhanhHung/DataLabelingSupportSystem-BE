@@ -36,6 +36,12 @@ public class DataItemController {
         return ResponseEntity.ok(dataItemService.getAll(pageable)); // 200
     }
 
+    @GetMapping("/export")
+    @Operation(summary = "Xuất data items đã gắn nhãn theo project", description = "Trả về data items kèm cột nhãn (label) cho export CSV/JSON.")
+    public ResponseEntity<List<DataItemExportResponse>> getLabeledByProjectForExport(@RequestParam UUID projectId) {
+        return ResponseEntity.ok(dataItemService.getLabeledByProjectForExport(projectId)); // 200
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get data item by ID")
     public ResponseEntity<DataItemResponse> getById(@PathVariable UUID id) {
