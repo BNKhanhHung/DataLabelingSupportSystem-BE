@@ -62,12 +62,28 @@ public class TaskController {
         return ResponseEntity.ok(taskService.getByAnnotator(annotatorId, pageable)); // 200
     }
 
+    @GetMapping("/annotator/{annotatorId}/in-progress")
+    @Operation(summary = "Task được giao (IN_PROGRESS) cho annotator")
+    public ResponseEntity<PageResponse<TaskResponse>> getAssignedInProgressByAnnotator(
+            @PathVariable UUID annotatorId,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(taskService.getAssignedInProgressByAnnotator(annotatorId, pageable)); // 200
+    }
+
     @GetMapping("/reviewer/{reviewerId}")
     @Operation(summary = "Task cần review (SUBMITTED)", description = "Chỉ task đã nộp (SUBMITTED), chờ reviewer. Sort: id, status, createdAt.")
     public ResponseEntity<PageResponse<TaskResponse>> getByReviewer(
             @PathVariable UUID reviewerId,
             @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(taskService.getByReviewer(reviewerId, pageable)); // 200
+    }
+
+    @GetMapping("/reviewer/{reviewerId}/in-progress")
+    @Operation(summary = "Task được giao (IN_PROGRESS) cho reviewer")
+    public ResponseEntity<PageResponse<TaskResponse>> getAssignedInProgressByReviewer(
+            @PathVariable UUID reviewerId,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(taskService.getAssignedInProgressByReviewer(reviewerId, pageable)); // 200
     }
 
     @GetMapping("/search")
@@ -100,6 +116,14 @@ public class TaskController {
             @PathVariable UUID id,
             @RequestBody UpdateTaskDueDateRequest request) {
         return ResponseEntity.ok(taskService.updateDueDate(id, request != null ? request.getDueDate() : null)); // 200
+    }
+
+    @PatchMapping("/{id}/assign")
+    @Operation(summary = "Re-assign annotator & reviewer (Manager/Admin)")
+    public ResponseEntity<TaskResponse> assign(
+            @PathVariable UUID id,
+            @Valid @RequestBody TaskAssignRequest request) {
+        return ResponseEntity.ok(taskService.assign(id, request.getAnnotatorId(), request.getReviewerId())); // 200
     }
 
     @PatchMapping("/{id}/submit")
@@ -135,7 +159,7 @@ public class TaskController {
 
     @PatchMapping("/{id}/refuse")
     @Operation(summary = "Refuse (decline) an assigned task",
-            description = "Annotator/Reviewer từ chối task được giao. Task chuyển về OPEN, Manager nhận thông báo kèm lý do. Chỉ cho phép khi task ở trạng thái OPEN hoặc IN_PROGRESS.")
+            description = "Annotator/Reviewer từ chối task được giao. Task chuyển về OPEN, Manager nhận thông báo kèm lý do. Chỉ cho phép khi task ở trạng thái OPEN/IN_PROGRESS/OVERDUE.")
     public ResponseEntity<TaskResponse> refuseTask(
             @PathVariable UUID id,
             @Valid @RequestBody TaskRefuseRequest request) {

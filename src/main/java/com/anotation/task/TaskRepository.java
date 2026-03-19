@@ -61,6 +61,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
       WHERE t.annotator.id = :userId
         AND t.status IN (com.anotation.task.TaskStatus.OPEN,
                          com.anotation.task.TaskStatus.IN_PROGRESS,
+                         com.anotation.task.TaskStatus.OVERDUE,
                          com.anotation.task.TaskStatus.SUBMITTED)
       """)
   long countActiveTasksByAnnotatorId(@Param("userId") UUID userId);
@@ -70,9 +71,12 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
       WHERE t.reviewer.id = :userId
         AND t.status IN (com.anotation.task.TaskStatus.OPEN,
                          com.anotation.task.TaskStatus.IN_PROGRESS,
+                         com.anotation.task.TaskStatus.OVERDUE,
                          com.anotation.task.TaskStatus.SUBMITTED)
       """)
   long countActiveTasksByReviewerId(@Param("userId") UUID userId);
+
+  Page<Task> findByAnnotatorIdAndStatus(UUID annotatorId, TaskStatus status, Pageable pageable);
 
   // ── KPI count queries ────────────────────────────────────────────────────────
 

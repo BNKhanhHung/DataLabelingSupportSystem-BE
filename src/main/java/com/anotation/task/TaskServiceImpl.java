@@ -148,6 +148,20 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageResponse<TaskResponse> getAssignedInProgressByAnnotator(UUID annotatorId, Pageable pageable) {
+        try {
+            return PageResponse.from(
+                    taskRepository.findByAnnotatorIdAndStatus(annotatorId, TaskStatus.IN_PROGRESS, pageable),
+                    this::toResponse);
+        } catch (PropertyReferenceException e) {
+            return PageResponse.from(
+                    taskRepository.findByAnnotatorIdAndStatus(annotatorId, TaskStatus.IN_PROGRESS, safePageable(pageable)),
+                    this::toResponse);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getByReviewer(UUID reviewerId, Pageable pageable) {
         try {
             return PageResponse.from(
@@ -156,6 +170,20 @@ public class TaskServiceImpl implements TaskService {
         } catch (PropertyReferenceException e) {
             return PageResponse.from(
                     taskRepository.findByReviewerIdAndStatus(reviewerId, TaskStatus.SUBMITTED, safePageable(pageable)),
+                    this::toResponse);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<TaskResponse> getAssignedInProgressByReviewer(UUID reviewerId, Pageable pageable) {
+        try {
+            return PageResponse.from(
+                    taskRepository.findByReviewerIdAndStatus(reviewerId, TaskStatus.IN_PROGRESS, pageable),
+                    this::toResponse);
+        } catch (PropertyReferenceException e) {
+            return PageResponse.from(
+                    taskRepository.findByReviewerIdAndStatus(reviewerId, TaskStatus.IN_PROGRESS, safePageable(pageable)),
                     this::toResponse);
         }
     }
@@ -496,11 +524,12 @@ public class TaskServiceImpl implements TaskService {
                     "Only the assigned Annotator or Reviewer can refuse this task.");
         }
 
-        // 2. Chỉ được từ chối task ở trạng thái chưa bắt đầu hoặc đang làm
+        // 2. Chỉ được từ chối task ở trạng thái chưa bắt đầu / đang làm / quá hạn
         if (task.getStatus() != TaskStatus.OPEN
-                && task.getStatus() != TaskStatus.IN_PROGRESS) {
+                && task.getStatus() != TaskStatus.IN_PROGRESS
+                && task.getStatus() != TaskStatus.OVERDUE) {
             throw new BadRequestException(
-                    "Only tasks in OPEN or IN_PROGRESS status can be refused. Current: " + task.getStatus());
+                    "Only tasks in OPEN, IN_PROGRESS or OVERDUE status can be refused. Current: " + task.getStatus());
         }
 
         // 3. Trả Task về trạng thái OPEN (vô chủ, chờ Manager giao lại)
@@ -521,6 +550,51 @@ public class TaskServiceImpl implements TaskService {
         }
 
         return toResponse(task);
+    }
+
+    @Override
+    @Transactional
+    public TaskResponse assign(UUID taskId, UUID annotatorId, UUID reviewerId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new NotFoundException("Task not found: " + taskId));
+
+        TaskStatus st = task.getStatus();
+        if (st == TaskStatus.SUBMITTED || st == TaskStatus.REVIEWED || st == TaskStatus.COMPLETED) {
+            throw new BadRequestException("Cannot re-assign task in status: " + st);
+        }
+
+        User annotator = userRepository.findById(annotatorId)
+                .orElseThrow(() -> new NotFoundException("Annotator not found: " + annotatorId));
+        User reviewer = userRepository.findById(reviewerId)
+                .orElseThrow(() -> new NotFoundException("Reviewer not found: " + reviewerId));
+
+        if (!userRoleRepository.existsByUserIdAndRoleNameIgnoreCase(annotatorId, "Annotator")) {
+            throw new BadRequestException("User " + annotatorId + " does not have role 'Annotator'.");
+        }
+        if (!userRoleRepository.existsByUserIdAndRoleNameIgnoreCase(reviewerId, "Reviewer")) {
+            throw new BadRequestException("User " + reviewerId + " does not have role 'Reviewer'.");
+        }
+
+        // WIP limit tương tự lúc tạo task
+        long annotatorActiveCount = taskRepository.countActiveTasksByAnnotatorId(annotatorId);
+        if (annotatorActiveCount >= MAX_ACTIVE_TASKS) {
+            throw new BadRequestException("Annotator has reached max active tasks: " + MAX_ACTIVE_TASKS);
+        }
+        long reviewerActiveCount = taskRepository.countActiveTasksByReviewerId(reviewerId);
+        if (reviewerActiveCount >= MAX_ACTIVE_TASKS) {
+            throw new BadRequestException("Reviewer has reached max active tasks: " + MAX_ACTIVE_TASKS);
+        }
+
+        task.setAnnotator(annotator);
+        task.setReviewer(reviewer);
+        Task saved = taskRepository.save(task);
+
+        // Notify annotator về việc được phân công (consistent với create)
+        notificationService.create(annotatorId, "TASK_ASSIGNED", "Task được phân công",
+                "Bạn được phân công task cho project: " + (saved.getProject() != null ? saved.getProject().getName() : ""),
+                "TASK", saved.getId());
+
+        return toResponse(saved);
     }
 
     // ── Delete ───────────────────────────────────────────────────────────────────

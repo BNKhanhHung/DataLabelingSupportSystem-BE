@@ -60,5 +60,14 @@ public interface TaskService {
      */
     TaskResponse refuseTask(UUID taskId, String reason);
 
+    /** Manager/Admin đổi phân công annotator và reviewer cho task. */
+    TaskResponse assign(UUID taskId, UUID annotatorId, UUID reviewerId);
+
+    /** Task IN_PROGRESS được giao cho annotator. */
+    PageResponse<TaskResponse> getAssignedInProgressByAnnotator(UUID annotatorId, Pageable pageable);
+
+    /** Task IN_PROGRESS được giao cho reviewer (task đang có reviewer đó). */
+    PageResponse<TaskResponse> getAssignedInProgressByReviewer(UUID reviewerId, Pageable pageable);
+
     void delete(UUID id);
 }

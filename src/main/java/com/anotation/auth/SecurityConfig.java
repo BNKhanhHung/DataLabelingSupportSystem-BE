@@ -78,6 +78,8 @@ public class SecurityConfig {
                         // ── USER (Annotator): nộp task để review; USER (Reviewer): hoàn tất review ─
                         .requestMatchers(HttpMethod.PATCH, "/api/tasks/*/submit").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/tasks/*/complete-review").authenticated()
+                        // ── USER (Annotator/Reviewer): từ chối task được giao ─
+                        .requestMatchers(HttpMethod.PATCH, "/api/tasks/*/refuse").authenticated()
 
                         // ── Chỉnh sửa (POST/PUT/PATCH/DELETE): chỉ ADMIN & MANAGER; không cho USER sửa role, user-role, user (trừ đổi mật khẩu đã cho ở trên) ─
                         .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MANAGER")
