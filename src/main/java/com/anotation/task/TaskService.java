@@ -54,5 +54,11 @@ public interface TaskService {
     /** Get KPI metrics for a specific user (Annotator performance). */
     KpiResponse getAnnotatorKpi(UUID userId);
 
+    /**
+     * Annotator/Reviewer từ chối nhận Task.
+     * Task chuyển về OPEN, gỡ assignee, bắn Notification cho Manager.
+     */
+    TaskResponse refuseTask(UUID taskId, String reason);
+
     void delete(UUID id);
 }

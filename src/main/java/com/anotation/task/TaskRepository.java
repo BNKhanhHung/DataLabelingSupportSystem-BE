@@ -54,6 +54,26 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
       """)
   List<Task> findTasksToMarkOverdue(@Param("now") LocalDateTime now, Pageable pageable);
 
+  // ── WIP Limit count queries ──────────────────────────────────────────────────
+
+  @Query("""
+      SELECT COUNT(t) FROM Task t
+      WHERE t.annotator.id = :userId
+        AND t.status IN (com.anotation.task.TaskStatus.OPEN,
+                         com.anotation.task.TaskStatus.IN_PROGRESS,
+                         com.anotation.task.TaskStatus.SUBMITTED)
+      """)
+  long countActiveTasksByAnnotatorId(@Param("userId") UUID userId);
+
+  @Query("""
+      SELECT COUNT(t) FROM Task t
+      WHERE t.reviewer.id = :userId
+        AND t.status IN (com.anotation.task.TaskStatus.OPEN,
+                         com.anotation.task.TaskStatus.IN_PROGRESS,
+                         com.anotation.task.TaskStatus.SUBMITTED)
+      """)
+  long countActiveTasksByReviewerId(@Param("userId") UUID userId);
+
   // ── KPI count queries ────────────────────────────────────────────────────────
 
   long countByAnnotatorId(UUID annotatorId);

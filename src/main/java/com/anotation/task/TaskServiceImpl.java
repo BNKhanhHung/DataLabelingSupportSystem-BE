@@ -33,6 +33,9 @@ import java.util.UUID;
 @Transactional
 public class TaskServiceImpl implements TaskService {
 
+    /** Giới hạn tối đa số Task đang hoạt động (OPEN/IN_PROGRESS/SUBMITTED) mỗi người. */
+    private static final int MAX_ACTIVE_TASKS = 3;
+
     private final TaskRepository taskRepository;
     private final TaskItemRepository taskItemRepository;
     private final ProjectRepository projectRepository;
@@ -209,6 +212,22 @@ public class TaskServiceImpl implements TaskService {
                 reviewerId, "Reviewer")) {
             throw new BadRequestException(
                     "User " + reviewerId + " does not have role 'Reviewer'.");
+        }
+
+        // 5.1 WIP Limit: Annotator không được ôm quá MAX_ACTIVE_TASKS task đang hoạt động
+        long annotatorActiveCount = taskRepository.countActiveTasksByAnnotatorId(annotatorId);
+        if (annotatorActiveCount >= MAX_ACTIVE_TASKS) {
+            throw new BadRequestException(
+                    "Annotator " + annotator.getUsername() + " đã đạt giới hạn "
+                    + MAX_ACTIVE_TASKS + " task đang hoạt động. Vui lòng chờ hoàn thành task cũ.");
+        }
+
+        // 5.2 WIP Limit: Reviewer không được ôm quá MAX_ACTIVE_TASKS task đang hoạt động
+        long reviewerActiveCount = taskRepository.countActiveTasksByReviewerId(reviewerId);
+        if (reviewerActiveCount >= MAX_ACTIVE_TASKS) {
+            throw new BadRequestException(
+                    "Reviewer " + reviewer.getUsername() + " đã đạt giới hạn "
+                    + MAX_ACTIVE_TASKS + " task đang hoạt động. Vui lòng chờ hoàn thành task cũ.");
         }
 
         // 6 & 7. Validate each DataItem
@@ -459,6 +478,49 @@ public class TaskServiceImpl implements TaskService {
                 : 0.0);
 
         return kpi;
+    }
+
+    // ── Refuse Task ─────────────────────────────────────────────────────────────
+
+    @Override
+    public TaskResponse refuseTask(UUID taskId, String reason) {
+        Task task = findOrThrow(taskId);
+        User currentUser = getCurrentUser();
+        UUID currentUserId = currentUser.getId();
+
+        // 1. Chỉ Annotator hoặc Reviewer được giao mới có quyền từ chối
+        boolean isAssignedAnnotator = task.getAnnotator().getId().equals(currentUserId);
+        boolean isAssignedReviewer = task.getReviewer().getId().equals(currentUserId);
+        if (!isAssignedAnnotator && !isAssignedReviewer) {
+            throw new BadRequestException(
+                    "Only the assigned Annotator or Reviewer can refuse this task.");
+        }
+
+        // 2. Chỉ được từ chối task ở trạng thái chưa bắt đầu hoặc đang làm
+        if (task.getStatus() != TaskStatus.OPEN
+                && task.getStatus() != TaskStatus.IN_PROGRESS) {
+            throw new BadRequestException(
+                    "Only tasks in OPEN or IN_PROGRESS status can be refused. Current: " + task.getStatus());
+        }
+
+        // 3. Trả Task về trạng thái OPEN (vô chủ, chờ Manager giao lại)
+        task.setStatus(TaskStatus.OPEN);
+        taskRepository.save(task);
+
+        // 4. Bắn Notification cho tất cả Manager biết Task bị trả lại
+        String roleName = isAssignedAnnotator ? "Annotator" : "Reviewer";
+        String projectName = task.getProject().getName();
+        String notifMessage = roleName + " " + currentUser.getUsername()
+                + " đã từ chối task trong dự án \"" + projectName
+                + "\". Lý do: " + reason;
+
+        for (User manager : userRepository.findBySystemRoleIn(
+                java.util.Set.of(com.anotation.user.SystemRole.MANAGER, com.anotation.user.SystemRole.ADMIN))) {
+            notificationService.create(manager.getId(), "TASK_REFUSED",
+                    "Task bị từ chối", notifMessage, "TASK", taskId);
+        }
+
+        return toResponse(task);
     }
 
     // ── Delete ───────────────────────────────────────────────────────────────────

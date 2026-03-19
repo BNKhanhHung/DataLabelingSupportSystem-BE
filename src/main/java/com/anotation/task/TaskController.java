@@ -133,6 +133,15 @@ public class TaskController {
         return ResponseEntity.ok(taskService.getAnnotatorKpi(userId)); // 200
     }
 
+    @PatchMapping("/{id}/refuse")
+    @Operation(summary = "Refuse (decline) an assigned task",
+            description = "Annotator/Reviewer từ chối task được giao. Task chuyển về OPEN, Manager nhận thông báo kèm lý do. Chỉ cho phép khi task ở trạng thái OPEN hoặc IN_PROGRESS.")
+    public ResponseEntity<TaskResponse> refuseTask(
+            @PathVariable UUID id,
+            @Valid @RequestBody TaskRefuseRequest request) {
+        return ResponseEntity.ok(taskService.refuseTask(id, request.getReason())); // 200
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a task")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {

@@ -1,0 +1,10 @@
+﻿ccc157b feat: SecurityConfig GET cho USER, task items API, Supabase/upload, schema
+7d52fc4 fix: prevent 500 on get-all APIs - safe sort for label, annotation, dataset, dataitem, reviewfeedback, userrole
+e08ad51 Merge pull request #4 from BNKhanhHung/Thongcao
+5d5ff08 fix(swagger): remove duplicate SecurityScheme
+fa3b5a6 Merge branch 'main' of https://github.com/BNKhanhHung/DataLabelingSupportSystem-BE
+ffad3bb feat: GET tasks by reviewer; allow USER GET /api/tasks/reviewer/**
+2d6a1f7 Merge branch BNKHung: Swagger Authorize, MANAGER access, public register, fix sort 500
+885a95a Merge pull request #3 from BNKhanhHung/Thongcao
+66c4512 chore: Add Swagger OpenAPI authorize configuration
+94457f3 update author details

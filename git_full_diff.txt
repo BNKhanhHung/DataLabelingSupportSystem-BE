@@ -1,0 +1,804 @@
+﻿diff --git a/env.example b/env.example
+new file mode 100644
+index 0000000..f1ed6f8
+--- /dev/null
++++ b/env.example
+@@ -0,0 +1,20 @@
++# Copy file nĂ y thĂ nh .env (hoáº·c set tá»«ng biáº¿n trong mĂ´i trÆ°á»ng / IDE)
++# Supabase: Dashboard â†’ Project Settings â†’ API
++
++# Database (Ä‘Ă£ cĂ³ sáºµn trong application.yml, chá»‰ cáº§n sá»­a náº¿u Ä‘á»•i project)
++# SUPABASE_DB_URL=jdbc:postgresql://xxx.pooler.supabase.com:5432/postgres?sslmode=require
++# SUPABASE_DB_USERNAME=postgres.xxxxx
++# SUPABASE_DB_PASSWORD=your-password
++
++# Storage â€“ báº¯t buá»™c Ä‘á»ƒ upload file lĂªn Supabase (thay placeholder)
++SUPABASE_URL=https://your-project-ref.supabase.co
++SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
++SUPABASE_STORAGE_BUCKET=data-items
++
++# TĂ¹y chá»n
++# SERVER_PORT=8080
++# APP_BASE_URL=http://localhost:8080
++# UPLOAD_DIR=./uploads
++# MAX_FILE_SIZE=10MB
++# JWT_SECRET=your-256-bit-secret
++# JWT_EXPIRATION=86400000
+diff --git a/src/main/java/com/anotation/auth/SecurityConfig.java b/src/main/java/com/anotation/auth/SecurityConfig.java
+index 33be50f..08de61d 100644
+--- a/src/main/java/com/anotation/auth/SecurityConfig.java
++++ b/src/main/java/com/anotation/auth/SecurityConfig.java
+@@ -21,9 +21,9 @@ import java.util.List;
+ /**
+  * Security Configuration â€” Authorization Rules
+  *
+- * - ADMIN & MANAGER : full access to all APIs.
+- * - USER : only login, profile (users/me), labeling (annotations), review (review-feedbacks),
+- *   and read own tasks (GET tasks by annotator/id) for workflow.
++ * - USER (authenticated): GET trĂªn cĂ¡c API (projects, tasks, labels, datasets, data-items, roles, user-roles, users);
++ *   Ä‘á»•i máº­t kháº©u (PATCH /api/users/me/password). KhĂ´ng Ä‘Æ°á»£c chá»‰nh sá»­a role, user-role, user (trá»« Ä‘á»•i máº­t kháº©u).
++ * - ADMIN & MANAGER: full access (GET + POST/PUT/PATCH/DELETE) trĂªn quáº£n lĂ½ users, roles, user-roles, projects, tasks, labels, datasets, data-items.
+  */
+ @Configuration
+ @EnableWebSecurity
+@@ -50,34 +50,39 @@ public class SecurityConfig {
+                                 "/swagger",
+                                 "/swagger-ui/**",
+                                 "/api-docs/**",
+-                                "/v3/api-docs/**")
++                                "/v3/api-docs/**",
++                                "/api/uploads/**")
+                         .permitAll()
+ 
+-                        // â”€â”€ USER: profile (Ä‘Äƒng nháº­p xong xem thĂ´ng tin mĂ¬nh) â”€â”€â”€â”€â”€
++                        // â”€â”€ USER: profile + chá»‰ Ä‘á»•i máº­t kháº©u (khĂ´ng chá»‰nh sá»­a user khĂ¡c) â”€
+                         .requestMatchers("/api/users/me", "/api/users/me/**").authenticated()
+-
+-                        // â”€â”€ USER: Ä‘Ă¡nh nhĂ£n (annotations) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
++                        .requestMatchers(HttpMethod.PATCH, "/api/users/me/password").authenticated()
++
++                        // â”€â”€ USER: GET trĂªn má»i API (Ä‘á»c only); khĂ´ng cho POST/PUT/PATCH/DELETE á»Ÿ cĂ¡c rule sau â”€
++                        .requestMatchers(HttpMethod.GET, "/api/projects/**").authenticated()
++                        .requestMatchers(HttpMethod.GET, "/api/tasks/**").authenticated()
++                        .requestMatchers(HttpMethod.GET, "/api/labels/**").authenticated()
++                        .requestMatchers(HttpMethod.GET, "/api/datasets/**").authenticated()
++                        .requestMatchers(HttpMethod.GET, "/api/data-items/**").authenticated()
++                        .requestMatchers(HttpMethod.GET, "/api/roles/**").authenticated()
++                        .requestMatchers(HttpMethod.GET, "/api/user-roles/**").authenticated()
++                        .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
++
++                        // â”€â”€ USER: Ä‘Ă¡nh nhĂ£n, review â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                         .requestMatchers("/api/annotations", "/api/annotations/**").authenticated()
+-
+-                        // â”€â”€ USER: review (review-feedbacks) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                         .requestMatchers("/api/review-feedbacks", "/api/review-feedbacks/**").authenticated()
+ 
+-                        // â”€â”€ USER: xem task cá»§a mĂ¬nh (annotator/reviewer) â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-                        .requestMatchers(HttpMethod.GET, "/api/tasks/annotator/**").authenticated()
+-                        .requestMatchers(HttpMethod.GET, "/api/tasks/reviewer/**").authenticated()
+-                        .requestMatchers(HttpMethod.GET, "/api/tasks/*").authenticated()
+-
+-                        // â”€â”€ ADMIN & MANAGER only â€” quáº£n lĂ½ users, roles, projects, tasks, ...
++                        // â”€â”€ Chá»‰nh sá»­a (POST/PUT/PATCH/DELETE): chá»‰ ADMIN & MANAGER; khĂ´ng cho USER sá»­a role, user-role, user (trá»« Ä‘á»•i máº­t kháº©u Ä‘Ă£ cho á»Ÿ trĂªn) â”€
+                         .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MANAGER")
+                         .requestMatchers("/api/roles/**").hasAnyRole("ADMIN", "MANAGER")
++                        .requestMatchers("/api/user-roles/**").hasAnyRole("ADMIN", "MANAGER")
+                         .requestMatchers("/api/projects/**").hasAnyRole("ADMIN", "MANAGER")
+                         .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "MANAGER")
+-                        .requestMatchers("/api/user-roles/**").hasAnyRole("ADMIN", "MANAGER")
+                         .requestMatchers("/api/labels/**").hasAnyRole("ADMIN", "MANAGER")
+                         .requestMatchers("/api/datasets/**").hasAnyRole("ADMIN", "MANAGER")
+                         .requestMatchers("/api/data-items/**").hasAnyRole("ADMIN", "MANAGER")
+ 
+-                        // â”€â”€ Any other API (future) â€” ADMIN & MANAGER only â”€â”€â”€â”€â”€â”€â”€â”€â”€
++                        // â”€â”€ CĂ²n láº¡i (API tÆ°Æ¡ng lai) â€” ADMIN & MANAGER â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                         .anyRequest().hasAnyRole("ADMIN", "MANAGER"))
+                 .addFilterBefore(jwtAuthenticationFilter,
+                         UsernamePasswordAuthenticationFilter.class);
+@@ -88,10 +93,20 @@ public class SecurityConfig {
+     @Bean
+     public CorsConfigurationSource corsConfigurationSource() {
+         CorsConfiguration config = new CorsConfiguration();
+-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:50337", "http://127.0.0.1:50337", "http://localhost:5173", "http://127.0.0.1:5173"));
++        // Cho phĂ©p frontend cháº¡y tá»« nhiá»u origin (serve, Live Server, Vite, Cursor, ...)
++        config.setAllowedOrigins(List.of(
++                "http://localhost:3000", "http://127.0.0.1:3000",
++                "http://localhost:5173", "http://127.0.0.1:5173",
++                "http://localhost:5500", "http://127.0.0.1:5500",
++                "http://localhost:5000", "http://127.0.0.1:5000",
++                "http://localhost:8081", "http://127.0.0.1:8081",
++                "http://localhost:4173", "http://127.0.0.1:4173",
++                "http://localhost:50337", "http://127.0.0.1:50337"
++        ));
+         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+         config.setAllowedHeaders(List.of("*"));
+         config.setAllowCredentials(true);
++        config.setMaxAge(3600L);
+         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+         source.registerCorsConfiguration("/**", config);
+         return source;
+diff --git a/src/main/java/com/anotation/dataitem/DataItem.java b/src/main/java/com/anotation/dataitem/DataItem.java
+index e9935b4..894ba32 100644
+--- a/src/main/java/com/anotation/dataitem/DataItem.java
++++ b/src/main/java/com/anotation/dataitem/DataItem.java
+@@ -8,9 +8,7 @@ import java.time.LocalDateTime;
+ import java.util.UUID;
+ 
+ @Entity
+-@Table(name = "data_items", schema = "public", uniqueConstraints = {
+-        @UniqueConstraint(name = "uq_dataitem_url_dataset", columnNames = { "dataset_id", "content_url" })
+-})
++@Table(name = "data_items", schema = "public")
+ public class DataItem {
+ 
+     @Id
+@@ -22,14 +20,14 @@ public class DataItem {
+     @JoinColumn(name = "dataset_id", nullable = false)
+     private Dataset dataset;
+ 
+-    @Column(name = "content_url", nullable = false)
++    @Column(name = "content_url", nullable = false, length = 1000)
+     private String contentUrl;
+ 
+-    @Column(columnDefinition = "TEXT")
++    @Column(name = "metadata", columnDefinition = "TEXT", nullable = true)
+     private String metadata;
+ 
+     @Enumerated(EnumType.STRING)
+-    @Column(nullable = false)
++    @Column(name = "status", nullable = false, length = 50)
+     private DataItemStatus status;
+ 
+     @Column(name = "created_at", nullable = false, updatable = false)
+diff --git a/src/main/java/com/anotation/storage/SupabaseStorageService.java b/src/main/java/com/anotation/storage/SupabaseStorageService.java
+index 8a3192e..dbf0a58 100644
+--- a/src/main/java/com/anotation/storage/SupabaseStorageService.java
++++ b/src/main/java/com/anotation/storage/SupabaseStorageService.java
+@@ -10,6 +10,8 @@ import java.net.URI;
+ import java.net.http.HttpClient;
+ import java.net.http.HttpRequest;
+ import java.net.http.HttpResponse;
++import java.nio.file.Files;
++import java.nio.file.Path;
+ import java.nio.file.Paths;
+ import java.time.Duration;
+ import java.util.UUID;
+@@ -17,24 +19,70 @@ import java.util.UUID;
+ @Service
+ public class SupabaseStorageService {
+ 
++    private static final String SUPABASE_PLACEHOLDER = "placeholder.supabase.co";
++
+     private final String supabaseUrl;
+     private final String serviceKey;
+     private final String bucket;
++    private final String uploadDir;
++    private final String baseUrl;
+     private final HttpClient httpClient;
+ 
+     public SupabaseStorageService(
+             @Value("${supabase.url}") String supabaseUrl,
+             @Value("${supabase.service-key}") String serviceKey,
+-            @Value("${supabase.storage.bucket}") String bucket) {
+-        this.supabaseUrl = supabaseUrl;
+-        this.serviceKey = serviceKey;
+-        this.bucket = bucket;
++            @Value("${supabase.storage.bucket}") String bucket,
++            @Value("${app.upload.dir:${user.home}/.data-labeling/uploads}") String uploadDir,
++            @Value("${app.base-url:http://localhost:8080}") String baseUrl) {
++        this.supabaseUrl = supabaseUrl != null ? supabaseUrl : "";
++        this.serviceKey = serviceKey != null ? serviceKey : "";
++        this.bucket = bucket != null ? bucket : "data-items";
++        // LuĂ´n dĂ¹ng Ä‘Æ°á»ng dáº«n tuyá»‡t Ä‘á»‘i Ä‘á»ƒ trĂ¡nh FileNotFoundException khi cháº¡y tá»« thÆ° má»¥c táº¡m Tomcat
++        String dir = uploadDir != null && !uploadDir.isBlank() ? uploadDir : System.getProperty("user.home") + "/.data-labeling/uploads";
++        this.uploadDir = Paths.get(dir).toAbsolutePath().normalize().toString();
++        this.baseUrl = baseUrl != null ? baseUrl.replaceAll("/$", "") : "http://localhost:8080";
+         this.httpClient = HttpClient.newBuilder()
+                 .connectTimeout(Duration.ofSeconds(10))
+                 .build();
+     }
+ 
++    /**
++     * Upload file: náº¿u Supabase chÆ°a cáº¥u hĂ¬nh (url chá»©a "placeholder") thĂ¬ lÆ°u local.
++     * Náº¿u Ä‘Ă£ cáº¥u hĂ¬nh Supabase thĂ¬ thá»­ gá»­i lĂªn Supabase; náº¿u tháº¥t báº¡i thĂ¬ fallback lÆ°u local.
++     */
+     public String upload(MultipartFile file, String folder) {
++        if (useLocalStorage()) {
++            return saveLocally(file, folder);
++        }
++        try {
++            return uploadToSupabase(file, folder);
++        } catch (Exception e) {
++            // Supabase lá»—i (key sai, bucket chÆ°a táº¡o, máº¡ng...) â†’ lÆ°u local Ä‘á»ƒ upload váº«n dĂ¹ng Ä‘Æ°á»£c
++            return saveLocally(file, folder);
++        }
++    }
++
++    private boolean useLocalStorage() {
++        if (supabaseUrl == null) return true;
++        String u = supabaseUrl.trim();
++        return u.isEmpty() || u.contains(SUPABASE_PLACEHOLDER);
++    }
++
++    private String saveLocally(MultipartFile file, String folder) {
++        String safeName = sanitizeFilename(file.getOriginalFilename());
++        String storedName = UUID.randomUUID() + "_" + safeName;
++        Path dir = Paths.get(uploadDir, folder).toAbsolutePath().normalize();
++        try {
++            Files.createDirectories(dir);
++            Path target = dir.resolve(storedName);
++            file.transferTo(target);
++            return baseUrl + "/api/uploads/" + folder + "/" + storedName;
++        } catch (IOException e) {
++            throw new BadRequestException("LÆ°u file tháº¥t báº¡i: " + (e.getMessage() != null ? e.getMessage() : "Lá»—i ghi Ä‘Ä©a."));
++        }
++    }
++
++    private String uploadToSupabase(MultipartFile file, String folder) {
+         String safeName = sanitizeFilename(file.getOriginalFilename());
+         String objectPath = folder + "/" + UUID.randomUUID() + "_" + safeName;
+         String uploadUrl = supabaseUrl + "/storage/v1/object/" + bucket + "/" + objectPath;
+@@ -53,13 +101,15 @@ public class SupabaseStorageService {
+             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+             int status = response.statusCode();
+             if (status < 200 || status >= 300) {
+-                throw new BadRequestException("Upload failed: " + response.body());
++                String body = response.body();
++                String detail = (body != null && !body.isBlank()) ? body : ("HTTP " + status + " â€“ kiá»ƒm tra cáº¥u hĂ¬nh Supabase (url, service-key, bucket).");
++                throw new BadRequestException("Upload tháº¥t báº¡i: " + detail);
+             }
+         } catch (InterruptedException e) {
+             Thread.currentThread().interrupt();
+-            throw new BadRequestException("Upload failed: " + e.getMessage());
++            throw new BadRequestException("Upload tháº¥t báº¡i: " + (e.getMessage() != null ? e.getMessage() : "ÄĂ£ bá»‹ giĂ¡n Ä‘oáº¡n."));
+         } catch (IOException e) {
+-            throw new BadRequestException("Upload failed: " + e.getMessage());
++            throw new BadRequestException("Upload tháº¥t báº¡i: " + (e.getMessage() != null ? e.getMessage() : "Lá»—i Ä‘á»c/ghi file."));
+         }
+ 
+         return supabaseUrl + "/storage/v1/object/public/" + bucket + "/" + objectPath;
+diff --git a/src/main/java/com/anotation/storage/UploadController.java b/src/main/java/com/anotation/storage/UploadController.java
+new file mode 100644
+index 0000000..8cbd69c
+--- /dev/null
++++ b/src/main/java/com/anotation/storage/UploadController.java
+@@ -0,0 +1,62 @@
++package com.anotation.storage;
++
++import com.anotation.exception.NotFoundException;
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.core.io.FileSystemResource;
++import org.springframework.core.io.Resource;
++import org.springframework.http.MediaType;
++import org.springframework.http.ResponseEntity;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RestController;
++
++import java.io.IOException;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++
++@RestController
++@RequestMapping("/api/uploads")
++public class UploadController {
++
++    private final Path uploadRoot;
++
++    public UploadController(@Value("${app.upload.dir:${user.home}/.data-labeling/uploads}") String uploadDir) {
++        String dir = uploadDir != null && !uploadDir.isBlank() ? uploadDir : System.getProperty("user.home") + "/.data-labeling/uploads";
++        this.uploadRoot = Paths.get(dir).toAbsolutePath().normalize();
++    }
++
++    @GetMapping("/{folder}/{filename}")
++    public ResponseEntity<Resource> serve(
++            @PathVariable String folder,
++            @PathVariable String filename) {
++
++        // Basic traversal protection
++        if (folder.contains("..") || folder.contains("/") || folder.contains("\\")
++                || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
++            throw new NotFoundException("File not found.");
++        }
++
++        Path file = uploadRoot.resolve(folder).resolve(filename).normalize();
++        if (!file.startsWith(uploadRoot) || !Files.exists(file) || !Files.isRegularFile(file)) {
++            throw new NotFoundException("File not found.");
++        }
++
++        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
++        try {
++            String detected = Files.probeContentType(file);
++            if (detected != null && !detected.isBlank()) {
++                mediaType = MediaType.parseMediaType(detected);
++            }
++        } catch (IOException ignored) {
++            // keep octet-stream
++        }
++
++        Resource resource = new FileSystemResource(file);
++        return ResponseEntity.ok()
++                .contentType(mediaType)
++                .body(resource);
++    }
++}
++
+diff --git a/src/main/java/com/anotation/task/TaskController.java b/src/main/java/com/anotation/task/TaskController.java
+index bebcbe6..3630903 100644
+--- a/src/main/java/com/anotation/task/TaskController.java
++++ b/src/main/java/com/anotation/task/TaskController.java
+@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.*;
+ 
++import java.util.List;
+ import java.util.UUID;
+ 
+ @RestController
+@@ -36,6 +37,12 @@ public class TaskController {
+         return ResponseEntity.ok(taskService.getById(id)); // 200
+     }
+ 
++    @GetMapping("/{id}/items")
++    @Operation(summary = "Get task items (for annotator labeling: taskItemId, dataItemId, contentUrl, hasAnnotation)")
++    public ResponseEntity<List<TaskItemResponse>> getTaskItems(@PathVariable UUID id) {
++        return ResponseEntity.ok(taskService.getTaskItems(id)); // 200
++    }
++
+     @GetMapping("/project/{projectId}")
+     @Operation(summary = "Get all tasks in a project",
+             description = "Sort há»£p lá»‡: id, status, createdAt (vd: sort=id,asc). TrĂ¡nh sort=string.")
+diff --git a/src/main/java/com/anotation/task/TaskItemResponse.java b/src/main/java/com/anotation/task/TaskItemResponse.java
+new file mode 100644
+index 0000000..6e61a05
+--- /dev/null
++++ b/src/main/java/com/anotation/task/TaskItemResponse.java
+@@ -0,0 +1,57 @@
++package com.anotation.task;
++
++import java.util.UUID;
++
++/**
++ * DTO for one item in a task (data item assigned to annotator).
++ * Used by annotator labeling UI: taskItemId for submit annotation, contentUrl to display.
++ */
++public class TaskItemResponse {
++
++    private UUID taskItemId;
++    private UUID dataItemId;
++    private String contentUrl;
++    private boolean hasAnnotation;
++
++    public TaskItemResponse() {
++    }
++
++    public TaskItemResponse(UUID taskItemId, UUID dataItemId, String contentUrl, boolean hasAnnotation) {
++        this.taskItemId = taskItemId;
++        this.dataItemId = dataItemId;
++        this.contentUrl = contentUrl;
++        this.hasAnnotation = hasAnnotation;
++    }
++
++    public UUID getTaskItemId() {
++        return taskItemId;
++    }
++
++    public void setTaskItemId(UUID taskItemId) {
++        this.taskItemId = taskItemId;
++    }
++
++    public UUID getDataItemId() {
++        return dataItemId;
++    }
++
++    public void setDataItemId(UUID dataItemId) {
++        this.dataItemId = dataItemId;
++    }
++
++    public String getContentUrl() {
++        return contentUrl;
++    }
++
++    public void setContentUrl(String contentUrl) {
++        this.contentUrl = contentUrl;
++    }
++
++    public boolean isHasAnnotation() {
++        return hasAnnotation;
++    }
++
++    public void setHasAnnotation(boolean hasAnnotation) {
++        this.hasAnnotation = hasAnnotation;
++    }
++}
+diff --git a/src/main/java/com/anotation/task/TaskService.java b/src/main/java/com/anotation/task/TaskService.java
+index d07ef9b..5910818 100644
+--- a/src/main/java/com/anotation/task/TaskService.java
++++ b/src/main/java/com/anotation/task/TaskService.java
+@@ -3,6 +3,7 @@ package com.anotation.task;
+ import com.anotation.common.PageResponse;
+ import org.springframework.data.domain.Pageable;
+ 
++import java.util.List;
+ import java.util.UUID;
+ 
+ public interface TaskService {
+@@ -10,6 +11,9 @@ public interface TaskService {
+ 
+     TaskResponse getById(UUID id);
+ 
++    /** Items in this task (for annotator labeling: taskItemId, dataItemId, contentUrl, hasAnnotation). */
++    List<TaskItemResponse> getTaskItems(UUID taskId);
++
+     PageResponse<TaskResponse> getByProject(UUID projectId, Pageable pageable);
+ 
+     PageResponse<TaskResponse> getByAnnotator(UUID annotatorId, Pageable pageable);
+diff --git a/src/main/java/com/anotation/task/TaskServiceImpl.java b/src/main/java/com/anotation/task/TaskServiceImpl.java
+index 93daf29..c01ca24 100644
+--- a/src/main/java/com/anotation/task/TaskServiceImpl.java
++++ b/src/main/java/com/anotation/task/TaskServiceImpl.java
+@@ -1,5 +1,6 @@
+ package com.anotation.task;
+ 
++import com.anotation.annotation.AnnotationRepository;
+ import com.anotation.common.PageResponse;
+ import com.anotation.exception.BadRequestException;
+ import com.anotation.exception.NotFoundException;
+@@ -36,6 +37,7 @@ public class TaskServiceImpl implements TaskService {
+     private final UserRoleRepository userRoleRepository;
+     private final DataItemRepository dataItemRepository;
+     private final TaskMapper taskMapper;
++    private final AnnotationRepository annotationRepository;
+ 
+     public TaskServiceImpl(TaskRepository taskRepository,
+             TaskItemRepository taskItemRepository,
+@@ -43,7 +45,8 @@ public class TaskServiceImpl implements TaskService {
+             UserRepository userRepository,
+             UserRoleRepository userRoleRepository,
+             DataItemRepository dataItemRepository,
+-            TaskMapper taskMapper) {
++            TaskMapper taskMapper,
++            AnnotationRepository annotationRepository) {
+         this.taskRepository = taskRepository;
+         this.taskItemRepository = taskItemRepository;
+         this.projectRepository = projectRepository;
+@@ -51,6 +54,7 @@ public class TaskServiceImpl implements TaskService {
+         this.userRoleRepository = userRoleRepository;
+         this.dataItemRepository = dataItemRepository;
+         this.taskMapper = taskMapper;
++        this.annotationRepository = annotationRepository;
+     }
+ 
+     // â”€â”€ Read operations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+@@ -75,6 +79,30 @@ public class TaskServiceImpl implements TaskService {
+         return toResponse(findOrThrow(id));
+     }
+ 
++    @Override
++    @Transactional(readOnly = true)
++    public List<TaskItemResponse> getTaskItems(UUID taskId) {
++        Task task = findOrThrow(taskId);
++        User currentUser = getCurrentUser();
++        boolean isAnnotator = task.getAnnotator().getId().equals(currentUser.getId());
++        boolean isManagerOrAdmin = currentUser.getSystemRole() == SystemRole.MANAGER || currentUser.getSystemRole() == SystemRole.ADMIN;
++        if (!isAnnotator && !isManagerOrAdmin) {
++            throw new BadRequestException("Only the assigned annotator or Manager/Admin can view task items.");
++        }
++        List<TaskItem> items = taskItemRepository.findByTaskId(task.getId());
++        List<TaskItemResponse> result = new ArrayList<>();
++        for (TaskItem ti : items) {
++            DataItem di = ti.getDataItem();
++            boolean hasAnnotation = annotationRepository.existsByTaskItemId(ti.getId());
++            result.add(new TaskItemResponse(
++                    ti.getId(),
++                    di.getId(),
++                    di.getContentUrl() != null ? di.getContentUrl() : "",
++                    hasAnnotation));
++        }
++        return result;
++    }
++
+     @Override
+     @Transactional(readOnly = true)
+     public PageResponse<TaskResponse> getByProject(UUID projectId, Pageable pageable) {
+@@ -128,8 +156,10 @@ public class TaskServiceImpl implements TaskService {
+     public TaskResponse create(TaskRequest request) {
+         User currentUser = getCurrentUser();
+         boolean isAdmin = currentUser.getSystemRole() == SystemRole.ADMIN;
+-        if (!isAdmin && !userRoleRepository.existsByUserIdAndRoleNameIgnoreCase(
+-                currentUser.getId(), "Manager")) {
++        boolean isSystemManager = currentUser.getSystemRole() == SystemRole.MANAGER;
++        boolean hasManagerRole = userRoleRepository.existsByUserIdAndRoleNameIgnoreCase(
++                currentUser.getId(), "Manager");
++        if (!isAdmin && !isSystemManager && !hasManagerRole) {
+             throw new BadRequestException("Only Manager can create tasks.");
+         }
+ 
+diff --git a/src/main/resources/application.yml b/src/main/resources/application.yml
+index 7b8f110..7c03d43 100644
+--- a/src/main/resources/application.yml
++++ b/src/main/resources/application.yml
+@@ -1,3 +1,7 @@
++# â”€â”€ Cáº¥u hĂ¬nh Backend - Data Labeling Support System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
++# CĂ³ thá»ƒ ghi Ä‘Ă¨ báº±ng biáº¿n mĂ´i trÆ°á»ng (VD: SUPABASE_URL=...)
++# Supabase: Dashboard â†’ Project Settings â†’ API (URL, service_role) vĂ  Storage (táº¡o bucket data-items)
++
+ server:
+   port: ${SERVER_PORT:8080}
+ 
+@@ -24,13 +28,20 @@ springdoc:
+   swagger-ui:
+     path: /swagger
+ 
+-# â”€â”€ JWT Configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
++# â”€â”€ JWT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ jwt:
+   secret: ${JWT_SECRET:MyDefaultSuperSecretKeyThatIsAtLeast256BitsLong!!}
+   expiration-ms: ${JWT_EXPIRATION:86400000}   # 24 hours
+ 
++# â”€â”€ Supabase (Storage upload file) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ supabase:
+-  url: ${SUPABASE_URL:https://placeholder.supabase.co}
+-  service-key: ${SUPABASE_SERVICE_KEY:placeholder-key-for-local-test}
++  url: https://wqillyzrmdbjvxfnckhx.supabase.co
++  service-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxaWxseXpybWRianZ4Zm5ja2h4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDA1OTI0NCwiZXhwIjoyMDg1NjM1MjQ0fQ.QoLHcdLK7YYs1m9uVkaRAWio-GSw39VZhXbtDDOIrJQ
+   storage:
+-    bucket: ${SUPABASE_STORAGE_BUCKET:data-items}
++    bucket: data-items
++
++# â”€â”€ Upload local (fallback khi Supabase lá»—i; dĂ¹ng Ä‘Æ°á»ng dáº«n tuyá»‡t Ä‘á»‘i trĂ¡nh FileNotFoundException) â”€
++app:
++  upload:
++    dir: ${UPLOAD_DIR:${user.home}/.data-labeling/uploads}
++  base-url: ${APP_BASE_URL:http://localhost:8080}
+diff --git a/src/main/resources/schema/data_items.sql b/src/main/resources/schema/data_items.sql
+new file mode 100644
+index 0000000..2f2f0fd
+--- /dev/null
++++ b/src/main/resources/schema/data_items.sql
+@@ -0,0 +1,33 @@
++-- Schema báº£ng data_items cho Supabase / PostgreSQL
++-- Cháº¡y trong Supabase SQL Editor náº¿u cáº§n táº¡o/cáº­p nháº­t báº£ng cho khá»›p vá»›i backend.
++
++-- Báº£ng datasets pháº£i tá»“n táº¡i trÆ°á»›c (FK tá»« data_items -> datasets)
++-- Náº¿u chÆ°a cĂ³, táº¡o projects trÆ°á»›c, rá»“i datasets.
++
++-- Táº¡o báº£ng data_items (cháº¡y náº¿u báº£ng chÆ°a cĂ³)
++CREATE TABLE IF NOT EXISTS public.data_items (
++    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++    dataset_id UUID NOT NULL REFERENCES public.datasets(id) ON DELETE CASCADE,
++    content_url VARCHAR(1000) NOT NULL,
++    metadata TEXT,
++    status VARCHAR(50) NOT NULL DEFAULT 'NEW',
++    created_at TIMESTAMP NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
++    CONSTRAINT uq_dataitem_url_dataset UNIQUE (dataset_id, content_url)
++);
++
++-- Chá»‰ má»¥c cho truy váº¥n theo dataset vĂ  status
++CREATE INDEX IF NOT EXISTS idx_data_items_dataset_id ON public.data_items(dataset_id);
++CREATE INDEX IF NOT EXISTS idx_data_items_status ON public.data_items(status);
++CREATE INDEX IF NOT EXISTS idx_data_items_created_at ON public.data_items(created_at DESC);
++
++-- RLS (Row Level Security) tĂ¹y chá»n cho Supabase â€“ báº­t náº¿u dĂ¹ng Supabase Auth
++-- ALTER TABLE public.data_items ENABLE ROW LEVEL SECURITY;
++
++COMMENT ON TABLE public.data_items IS 'Data items thuá»™c dataset, dĂ¹ng cho gĂ¡n nhĂ£n (annotation).';
++COMMENT ON COLUMN public.data_items.status IS 'NEW | ASSIGNED | ANNOTATED | REVIEWED';
++
++-- Náº¿u báº£ng Ä‘Ă£ tá»“n táº¡i, cĂ³ thá»ƒ cháº¡y cĂ¡c lá»‡nh sau Ä‘á»ƒ chá»‰nh cho khá»›p backend:
++-- ALTER TABLE public.data_items ALTER COLUMN content_url TYPE VARCHAR(1000);
++-- ALTER TABLE public.data_items ALTER COLUMN status TYPE VARCHAR(50);
++-- ALTER TABLE public.data_items ALTER COLUMN metadata DROP NOT NULL;  -- náº¿u Ä‘ang NOT NULL
++-- CREATE UNIQUE INDEX IF NOT EXISTS uq_dataitem_url_dataset ON public.data_items(dataset_id, content_url);
+diff --git a/src/main/resources/schema/supabase_schema.sql b/src/main/resources/schema/supabase_schema.sql
+new file mode 100644
+index 0000000..e943b26
+--- /dev/null
++++ b/src/main/resources/schema/supabase_schema.sql
+@@ -0,0 +1,140 @@
++-- Schema Supabase (PostgreSQL) â€“ thá»© tá»± Ä‘Ăºng Ä‘á»ƒ cháº¡y, khá»›p vá»›i backend.
++-- Cháº¡y trong Supabase SQL Editor. WARNING: DĂ¹ng cho context/migration; náº¿u DB Ä‘Ă£ cĂ³ báº£ng thĂ¬ dĂ¹ng ALTER hoáº·c bá» qua.
++
++-- 1. Báº£ng khĂ´ng phá»¥ thuá»™c FK
++CREATE TABLE IF NOT EXISTS public.projects (
++  id uuid NOT NULL DEFAULT gen_random_uuid(),
++  name character varying NOT NULL,
++  description character varying,
++  created_at timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
++  CONSTRAINT projects_pkey PRIMARY KEY (id),
++  CONSTRAINT projects_name_unique UNIQUE (name)
++);
++
++CREATE TABLE IF NOT EXISTS public.users (
++  id uuid NOT NULL DEFAULT gen_random_uuid(),
++  username character varying NOT NULL,
++  email character varying NOT NULL,
++  password_hash character varying NOT NULL,
++  status character varying NOT NULL,
++  system_role character varying NOT NULL CHECK (system_role::text = ANY (ARRAY['USER'::character varying, 'ADMIN'::character varying, 'MANAGER'::character varying]::text[])),
++  created_at timestamp with time zone NOT NULL DEFAULT now(),
++  updated_at timestamp with time zone NOT NULL DEFAULT now(),
++  CONSTRAINT users_pkey PRIMARY KEY (id)
++);
++
++CREATE TABLE IF NOT EXISTS public.roles (
++  id uuid NOT NULL DEFAULT gen_random_uuid(),
++  name character varying NOT NULL,
++  description character varying,
++  CONSTRAINT roles_pkey PRIMARY KEY (id),
++  CONSTRAINT roles_name_unique UNIQUE (name)
++);
++
++-- 2. Phá»¥ thuá»™c projects
++CREATE TABLE IF NOT EXISTS public.datasets (
++  id uuid NOT NULL DEFAULT gen_random_uuid(),
++  project_id uuid NOT NULL,
++  name character varying NOT NULL,
++  description character varying,
++  created_at timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
++  CONSTRAINT datasets_pkey PRIMARY KEY (id),
++  CONSTRAINT fk_datasets_project FOREIGN KEY (project_id) REFERENCES public.projects(id)
++);
++
++CREATE TABLE IF NOT EXISTS public.labels (
++  id uuid NOT NULL DEFAULT gen_random_uuid(),
++  project_id uuid NOT NULL,
++  name character varying NOT NULL,
++  description text,
++  color character varying,
++  created_at timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
++  updated_at timestamp without time zone,
++  CONSTRAINT labels_pkey PRIMARY KEY (id),
++  CONSTRAINT fk_labels_project FOREIGN KEY (project_id) REFERENCES public.projects(id)
++);
++
++-- 3. Phá»¥ thuá»™c users, projects
++CREATE TABLE IF NOT EXISTS public.tasks (
++  id uuid NOT NULL DEFAULT gen_random_uuid(),
++  project_id uuid NOT NULL,
++  annotator_id uuid NOT NULL,
++  reviewer_id uuid NOT NULL,
++  status character varying NOT NULL CHECK (status::text = ANY (ARRAY['OPEN'::character varying, 'IN_PROGRESS'::character varying, 'COMPLETED'::character varying]::text[])),
++  created_at timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
++  CONSTRAINT tasks_pkey PRIMARY KEY (id),
++  CONSTRAINT fk_tasks_project FOREIGN KEY (project_id) REFERENCES public.projects(id),
++  CONSTRAINT fk_tasks_annotator FOREIGN KEY (annotator_id) REFERENCES public.users(id),
++  CONSTRAINT fk_tasks_reviewer FOREIGN KEY (reviewer_id) REFERENCES public.users(id)
++);
++
++-- 4. Phá»¥ thuá»™c datasets
++CREATE TABLE IF NOT EXISTS public.data_items (
++  id uuid NOT NULL DEFAULT gen_random_uuid(),
++  dataset_id uuid NOT NULL,
++  content_url character varying NOT NULL,
++  metadata text,
++  status character varying NOT NULL DEFAULT 'NEW'::character varying CHECK (status::text = ANY (ARRAY['NEW'::character varying, 'ASSIGNED'::character varying, 'ANNOTATED'::character varying, 'REVIEWED'::character varying]::text[])),
++  created_at timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
++  CONSTRAINT data_items_pkey PRIMARY KEY (id),
++  CONSTRAINT fk_data_items_dataset FOREIGN KEY (dataset_id) REFERENCES public.datasets(id)
++);
++
++-- 5. Phá»¥ thuá»™c tasks, data_items
++CREATE TABLE IF NOT EXISTS public.task_items (
++  id uuid NOT NULL DEFAULT gen_random_uuid(),
++  task_id uuid NOT NULL,
++  data_item_id uuid NOT NULL,
++  CONSTRAINT task_items_pkey PRIMARY KEY (id),
++  CONSTRAINT fk_task_items_task FOREIGN KEY (task_id) REFERENCES public.tasks(id),
++  CONSTRAINT fk_task_items_data_item FOREIGN KEY (data_item_id) REFERENCES public.data_items(id)
++);
++
++-- 6. Phá»¥ thuá»™c users, task_items
++CREATE TABLE IF NOT EXISTS public.annotations (
++  id uuid NOT NULL DEFAULT gen_random_uuid(),
++  task_item_id uuid NOT NULL,
++  annotator_id uuid NOT NULL,
++  content text NOT NULL,
++  status character varying NOT NULL CHECK (status::text = ANY (ARRAY['SUBMITTED'::character varying, 'APPROVED'::character varying, 'REJECTED'::character varying]::text[])),
++  created_at timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
++  updated_at timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
++  CONSTRAINT annotations_pkey PRIMARY KEY (id),
++  CONSTRAINT annotations_task_item_id_unique UNIQUE (task_item_id),
++  CONSTRAINT fk_annotations_task_item FOREIGN KEY (task_item_id) REFERENCES public.task_items(id),
++  CONSTRAINT fk_annotations_annotator FOREIGN KEY (annotator_id) REFERENCES public.users(id)
++);
++
++-- 7. Phá»¥ thuá»™c annotations, users
++CREATE TABLE IF NOT EXISTS public.review_feedbacks (
++  id uuid NOT NULL DEFAULT gen_random_uuid(),
++  annotation_id uuid NOT NULL,
++  reviewer_id uuid NOT NULL,
++  status character varying NOT NULL CHECK (status::text = ANY (ARRAY['APPROVED'::character varying, 'REJECTED'::character varying]::text[])),
++  comment text,
++  created_at timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
++  CONSTRAINT review_feedbacks_pkey PRIMARY KEY (id),
++  CONSTRAINT review_feedbacks_annotation_id_unique UNIQUE (annotation_id),
++  CONSTRAINT fk_review_feedbacks_annotation FOREIGN KEY (annotation_id) REFERENCES public.annotations(id),
++  CONSTRAINT fk_review_feedbacks_reviewer FOREIGN KEY (reviewer_id) REFERENCES public.users(id)
++);
++
++-- 8. Phá»¥ thuá»™c users, roles, projects (user_roles trong Supabase cĂ³ project_id)
++CREATE TABLE IF NOT EXISTS public.user_roles (
++  id uuid NOT NULL DEFAULT gen_random_uuid(),
++  user_id uuid NOT NULL,
++  role_id uuid NOT NULL,
++  project_id uuid NOT NULL,
++  assigned_at timestamp without time zone NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
++  CONSTRAINT user_roles_pkey PRIMARY KEY (id),
++  CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id) REFERENCES public.users(id),
++  CONSTRAINT fk_user_roles_role FOREIGN KEY (role_id) REFERENCES public.roles(id),
++  CONSTRAINT fk_user_roles_project FOREIGN KEY (project_id) REFERENCES public.projects(id)
++);
++
++-- Chá»‰ má»¥c gá»£i Ă½
++CREATE INDEX IF NOT EXISTS idx_data_items_dataset_id ON public.data_items(dataset_id);
++CREATE INDEX IF NOT EXISTS idx_data_items_status ON public.data_items(status);
++CREATE INDEX IF NOT EXISTS idx_task_items_task_id ON public.task_items(task_id);
++CREATE INDEX IF NOT EXISTS idx_annotations_task_item_id ON public.annotations(task_item_id);
++CREATE INDEX IF NOT EXISTS idx_review_feedbacks_reviewer_id ON public.review_feedbacks(reviewer_id);
+diff --git a/src/main/resources/schema/supabase_storage_upload.sql b/src/main/resources/schema/supabase_storage_upload.sql
+new file mode 100644
+index 0000000..c765e40
+--- /dev/null
++++ b/src/main/resources/schema/supabase_storage_upload.sql
+@@ -0,0 +1,58 @@
++-- =============================================================================
++-- Cáº¥u hĂ¬nh Supabase Storage Ä‘á»ƒ backend cĂ³ thá»ƒ upload file tá»« mĂ¡y lĂªn
++-- Cháº¡y toĂ n bá»™ script nĂ y trong Supabase SQL Editor (Dashboard â†’ SQL Editor).
++-- =============================================================================
++
++-- 1. Táº¡o bucket "data-items" (tĂªn pháº£i trĂ¹ng vá»›i SUPABASE_STORAGE_BUCKET trong backend)
++--    public = true: file upload xong cĂ³ thá»ƒ truy cáº­p qua URL public (Ä‘á»ƒ annotator xem áº£nh)
++INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
++VALUES (
++  'data-items',
++  'data-items',
++  true,
++  10485760,  -- 10MB, khá»›p vá»›i spring.servlet.multipart.max-file-size
++  null      -- null = cho phĂ©p má»i loáº¡i file (áº£nh, pdf, ...)
++)
++ON CONFLICT (id) DO UPDATE SET
++  public = EXCLUDED.public,
++  file_size_limit = EXCLUDED.file_size_limit,
++  allowed_mime_types = EXCLUDED.allowed_mime_types;
++
++-- 2. Policy: Cho phĂ©p má»i ngÆ°á»i Ä‘á»c file trong bucket (cáº§n cho URL public khi public = true)
++DROP POLICY IF EXISTS "Public read data-items" ON storage.objects;
++CREATE POLICY "Public read data-items"
++ON storage.objects FOR SELECT
++TO public
++USING (bucket_id = 'data-items');
++
++-- 3. Policy: Cho phĂ©p upload (INSERT) vĂ o bucket data-items
++--    Backend dĂ¹ng service_role key nĂªn thÆ°á»ng bá» qua RLS; policy nĂ y há»— trá»£ khi gá»i tá»« client hoáº·c API key khĂ¡c
++DROP POLICY IF EXISTS "Allow upload data-items" ON storage.objects;
++CREATE POLICY "Allow upload data-items"
++ON storage.objects FOR INSERT
++TO public
++WITH CHECK (bucket_id = 'data-items');
++
++-- 4. (TĂ¹y chá»n) Policy: Cho phĂ©p cáº­p nháº­t/xĂ³a object trong bucket (upsert, xĂ³a file)
++DROP POLICY IF EXISTS "Allow update data-items" ON storage.objects;
++CREATE POLICY "Allow update data-items"
++ON storage.objects FOR UPDATE
++TO public
++USING (bucket_id = 'data-items')
++WITH CHECK (bucket_id = 'data-items');
++
++DROP POLICY IF EXISTS "Allow delete data-items" ON storage.objects;
++CREATE POLICY "Allow delete data-items"
++ON storage.objects FOR DELETE
++TO public
++USING (bucket_id = 'data-items');
++
++-- =============================================================================
++-- Sau khi cháº¡y xong, cáº¥u hĂ¬nh backend (application.yml hoáº·c biáº¿n mĂ´i trÆ°á»ng):
++--
++--   SUPABASE_URL=https://xxxxx.supabase.co
++--   SUPABASE_SERVICE_KEY=eyJhbGc...   (Project Settings â†’ API â†’ service_role secret)
++--   SUPABASE_STORAGE_BUCKET=data-items
++--
++-- Rá»“i khá»Ÿi Ä‘á»™ng láº¡i backend vĂ  thá»­ upload file tá»« trang "ThĂªm Data Item".
++-- =============================================================================

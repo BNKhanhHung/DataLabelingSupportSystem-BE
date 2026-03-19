@@ -1,0 +1,13 @@
+﻿env.example
+src/main/java/com/anotation/auth/SecurityConfig.java
+src/main/java/com/anotation/dataitem/DataItem.java
+src/main/java/com/anotation/storage/SupabaseStorageService.java
+src/main/java/com/anotation/storage/UploadController.java
+src/main/java/com/anotation/task/TaskController.java
+src/main/java/com/anotation/task/TaskItemResponse.java
+src/main/java/com/anotation/task/TaskService.java
+src/main/java/com/anotation/task/TaskServiceImpl.java
+src/main/resources/application.yml
+src/main/resources/schema/data_items.sql
+src/main/resources/schema/supabase_schema.sql
+src/main/resources/schema/supabase_storage_upload.sql
