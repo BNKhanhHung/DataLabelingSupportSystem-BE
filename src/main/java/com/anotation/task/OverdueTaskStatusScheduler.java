@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Tự động cập nhật trạng thái task sang OVERDUE khi quá hạn.
- * Chỉ áp dụng cho các task chưa nộp: OPEN/IN_PROGRESS/DENIED.
+ * Áp dụng cho OPEN/IN_PROGRESS/DENIED và cả SUBMITTED (reviewer trễ review).
  */
 @Component
 public class OverdueTaskStatusScheduler {

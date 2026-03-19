@@ -163,13 +163,14 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getByReviewer(UUID reviewerId, Pageable pageable) {
+        List<TaskStatus> reviewQueueStatuses = List.of(TaskStatus.SUBMITTED, TaskStatus.OVERDUE);
         try {
             return PageResponse.from(
-                    taskRepository.findByReviewerIdAndStatus(reviewerId, TaskStatus.SUBMITTED, pageable),
+                    taskRepository.findByReviewerIdAndStatusIn(reviewerId, reviewQueueStatuses, pageable),
                     this::toResponse);
         } catch (PropertyReferenceException e) {
             return PageResponse.from(
-                    taskRepository.findByReviewerIdAndStatus(reviewerId, TaskStatus.SUBMITTED, safePageable(pageable)),
+                    taskRepository.findByReviewerIdAndStatusIn(reviewerId, reviewQueueStatuses, safePageable(pageable)),
                     this::toResponse);
         }
     }
@@ -410,10 +411,10 @@ public class TaskServiceImpl implements TaskService {
             }
         }
 
-        // 2. Task phải đang SUBMITTED
-        if (task.getStatus() != TaskStatus.SUBMITTED) {
+        // 2. Task phải đang SUBMITTED hoặc OVERDUE (quá hạn nhưng vẫn cho reviewer hoàn tất)
+        if (task.getStatus() != TaskStatus.SUBMITTED && task.getStatus() != TaskStatus.OVERDUE) {
             throw new BadRequestException(
-                    "Task must be SUBMITTED to complete review. Current status: " + task.getStatus());
+                    "Task must be SUBMITTED or OVERDUE to complete review. Current status: " + task.getStatus());
         }
 
         // 3. Tất cả annotations phải đã được review (không còn SUBMITTED)
@@ -469,7 +470,20 @@ public class TaskServiceImpl implements TaskService {
         List<Task> tasks = taskRepository.findTasksToMarkOverdue(now, PageRequest.of(0, 500, Sort.unsorted()));
         if (tasks.isEmpty()) return;
         for (Task t : tasks) {
+            TaskStatus previousStatus = t.getStatus();
             t.setStatus(TaskStatus.OVERDUE);
+
+            // Xác định người chịu lỗi trễ hạn theo trạng thái trước khi bị chuyển OVERDUE:
+            // - SUBMITTED  -> reviewer trễ review
+            // - còn lại    -> annotator trễ gán nhãn/nộp
+            User responsibleUser = (previousStatus == TaskStatus.SUBMITTED) ? t.getReviewer() : t.getAnnotator();
+            responsibleUser.setWarnings(responsibleUser.getWarnings() + 1);
+            userRepository.save(responsibleUser);
+
+            String projectName = t.getProject() != null ? t.getProject().getName() : "N/A";
+            String roleLabel = (previousStatus == TaskStatus.SUBMITTED) ? "reviewer" : "annotator";
+            String msg = "Task thuộc project \"" + projectName + "\" đã quá hạn (" + roleLabel + " chưa hoàn thành đúng hạn).";
+            notificationService.create(responsibleUser.getId(), "DEADLINE_OVERDUE_TASK", "Task quá hạn", msg, "TASK", t.getId());
         }
         taskRepository.saveAll(tasks);
     }

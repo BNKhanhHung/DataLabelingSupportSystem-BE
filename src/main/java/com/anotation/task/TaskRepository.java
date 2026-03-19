@@ -23,8 +23,11 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
   /** Task được giao cho annotator, loại trừ trạng thái COMPLETED và REVIEWED (chỉ hiện task còn cần làm). */
   Page<Task> findByAnnotatorIdAndStatusNotIn(UUID annotatorId, Collection<TaskStatus> statuses, Pageable pageable);
 
-  /** Task cần review: chỉ trạng thái SUBMITTED (annotator đã nộp, chờ reviewer). */
+  /** Task theo 1 trạng thái cụ thể của reviewer. */
   Page<Task> findByReviewerIdAndStatus(UUID reviewerId, TaskStatus status, Pageable pageable);
+
+  /** Task cần review: SUBMITTED/OVERDUE (đã nộp, chờ reviewer hoặc reviewer bị quá hạn). */
+  Page<Task> findByReviewerIdAndStatusIn(UUID reviewerId, Collection<TaskStatus> statuses, Pageable pageable);
 
   @Query("""
       SELECT t FROM Task t
@@ -43,14 +46,15 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
       """)
   Page<Task> findOverdueTasks(@Param("now") LocalDateTime now, Pageable pageable);
 
-  /** Tasks quá hạn để chuyển trạng thái sang OVERDUE (chỉ các trạng thái chưa nộp: OPEN/IN_PROGRESS/DENIED). */
+  /** Tasks quá hạn để chuyển trạng thái sang OVERDUE (bao gồm cả SUBMITTED chưa review kịp). */
   @Query("""
       SELECT t FROM Task t
       WHERE t.dueDate IS NOT NULL
         AND t.dueDate < :now
         AND t.status IN (com.anotation.task.TaskStatus.OPEN,
                          com.anotation.task.TaskStatus.IN_PROGRESS,
-                         com.anotation.task.TaskStatus.DENIED)
+                         com.anotation.task.TaskStatus.DENIED,
+                         com.anotation.task.TaskStatus.SUBMITTED)
       """)
   List<Task> findTasksToMarkOverdue(@Param("now") LocalDateTime now, Pageable pageable);
 

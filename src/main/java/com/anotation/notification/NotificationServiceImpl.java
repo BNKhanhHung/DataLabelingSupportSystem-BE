@@ -104,29 +104,17 @@ public class NotificationServiceImpl implements NotificationService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime since = now.minusHours(OVERDUE_NOTIFICATION_COOLDOWN_HOURS);
 
-        // Overdue tasks: notify annotator, reviewer, và manager/admin
+        // Overdue tasks: Notification chi tiết cho người chịu trách nhiệm đã được bắn tại
+        // bước markOverdueTasks() khi task vừa chuyển sang OVERDUE.
+        // Tại đây chỉ nhắc Manager/Admin theo chu kỳ để theo dõi tiến độ.
         List<User> managers = userRepository.findBySystemRoleIn(Set.of(SystemRole.MANAGER, SystemRole.ADMIN));
         List<Task> overdueTasks = taskRepository.findOverdueTasks(now, PageRequest.of(0, 500, Sort.unsorted())).getContent();
         for (Task task : overdueTasks) {
             String projectName = task.getProject() != null ? task.getProject().getName() : "N/A";
-            String msg = "Task thuộc project \"" + projectName + "\" đã quá hạn (annotator chưa hoàn thành).";
             UUID taskId = task.getId();
+            String msg = "Task thuộc project \"" + projectName + "\" đang quá hạn, cần theo dõi xử lý.";
 
-            // Annotator
-            UUID annotatorId = task.getAnnotator().getId();
-            if (!notificationRepository.existsByUserIdAndTypeAndRelatedEntityIdAndCreatedAtAfter(annotatorId, TYPE_OVERDUE_TASK, taskId, since)) {
-                create(annotatorId, TYPE_OVERDUE_TASK, "Task quá hạn", msg, ENTITY_TASK, taskId);
-                // Ghi nhận số lần trễ deadline (tăng 1 lần mỗi task mỗi 24h để tránh spam)
-                User annotator = task.getAnnotator();
-                annotator.setWarnings(annotator.getWarnings() + 1);
-                userRepository.save(annotator);
-            }
-            // Reviewer (nếu khác annotator)
-            UUID reviewerId = task.getReviewer().getId();
-            if (!reviewerId.equals(annotatorId) && !notificationRepository.existsByUserIdAndTypeAndRelatedEntityIdAndCreatedAtAfter(reviewerId, TYPE_OVERDUE_TASK, taskId, since)) {
-                create(reviewerId, TYPE_OVERDUE_TASK, "Task quá hạn", msg, ENTITY_TASK, taskId);
-            }
-            // Manager và Admin
+            // Manager/Admin vẫn luôn nhận thông báo để theo dõi tiến độ
             for (User manager : managers) {
                 UUID userId = manager.getId();
                 if (!notificationRepository.existsByUserIdAndTypeAndRelatedEntityIdAndCreatedAtAfter(userId, TYPE_OVERDUE_TASK, taskId, since)) {
