@@ -13,8 +13,9 @@ public class OverdueNotificationScheduler {
     }
 
     // Mỗi 15 phút
-    @Scheduled(cron = "0 */15 * * * *")
+    @Scheduled(cron = "*/30 * * * * *")
     public void checkOverdueAndNotify() {
         notificationService.checkAndCreateOverdueNotifications();
     }
 }
+    
