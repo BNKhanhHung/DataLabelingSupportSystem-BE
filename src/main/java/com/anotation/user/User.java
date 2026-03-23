@@ -9,7 +9,7 @@ import java.util.UUID;
  * Entity JPA ánh xạ bảng {@code users} (schema {@code public}): tài khoản đăng nhập hệ thống.
  * <p>
  * Lưu thông tin định danh, email, hash mật khẩu, trạng thái tài khoản, {@link SystemRole}, mốc thời gian
- * và số lần cảnh báo ({@code warnings}) dùng cho nghiệp vụ quá hạn task. {@link PrePersist}/{@link PreUpdate}
+ * và số lần cảnh báo ({@code warnings}) dùng cho nghiệp vụ quá hạn task. Callback {@code @PrePersist}/{@code @PreUpdate}
  * gán mặc định role và cập nhật timestamp.
  */
 @Entity
