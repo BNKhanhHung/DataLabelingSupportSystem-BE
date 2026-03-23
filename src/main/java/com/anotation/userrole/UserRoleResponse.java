@@ -3,6 +3,9 @@ package com.anotation.userrole;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * DTO trả về một bản ghi gán role: id assignment, thông tin user và role (dạng phẳng), thời điểm {@link #assignedAt}.
+ */
 public class UserRoleResponse {
 
     private UUID id;

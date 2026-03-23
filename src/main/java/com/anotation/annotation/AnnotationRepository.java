@@ -11,6 +11,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Spring Data JPA repository cho thực thể {@link Annotation}, khóa chính {@link java.util.UUID}.
+ * Hỗ trợ kiểm tra trùng theo task item ({@code existsByTaskItemId}, {@code findByTaskItemId}) để đảm bảo một task item chỉ có một annotation.
+ * Truy vấn JPQL theo task ({@code findByTaskId}), đếm theo trạng thái (APPROVED, SUBMITTED, REJECTED) phục vụ KPI và kiểm tra hoàn thành task.
+ * Các hàm đếm theo {@code annotator} (user gán task) dùng cho thống kê theo người dùng.
+ * {@code findContentByDataItemIdIn} trả về cặp (dataItemId, content) phục vụ xuất dữ liệu đã gán nhãn cùng {@link com.anotation.dataitem.DataItemServiceImpl}.
+ */
 @Repository
 public interface AnnotationRepository extends JpaRepository<Annotation, UUID> {
 

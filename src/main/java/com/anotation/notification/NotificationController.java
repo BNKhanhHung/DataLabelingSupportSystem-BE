@@ -12,8 +12,11 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Notification API: danh sách thông báo, đếm chưa đọc, đánh dấu đọc (1 hoặc tất cả), trigger kiểm tra overdue (tạo thông báo task/project quá hạn).
- * GET /, /unread-count; PATCH /{id}/read, /read-all; POST /check-overdue.
+ * REST API thông báo cho người dùng đăng nhập, gốc {@code /api/notifications}.
+ * <p>
+ * Cho phép xem danh sách phân trang, đếm chưa đọc, đánh dấu đã đọc từng bản ghi hoặc toàn bộ,
+ * và kích hoạt kiểm tra quá hạn (tạo thông báo loại {@code DEADLINE_OVERDUE_*} với giới hạn tần suất theo nghiệp vụ ở service).
+ * </p>
  */
 @RestController
 @RequestMapping("/api/notifications")

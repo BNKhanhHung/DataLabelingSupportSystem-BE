@@ -12,6 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+/**
+ * Triển khai {@link RoleService}: CRUD với kiểm tra trùng tên và fallback sort an toàn khi
+ * tham số {@code sort} không hợp lệ.
+ */
 @Service
 @Transactional
 public class RoleServiceImpl implements RoleService {
@@ -19,11 +23,20 @@ public class RoleServiceImpl implements RoleService {
     private final RoleRepository roleRepository;
     private final RoleMapper roleMapper;
 
+    /**
+     * @param roleRepository persistence
+     * @param roleMapper     map entity ↔ DTO
+     */
     public RoleServiceImpl(RoleRepository roleRepository, RoleMapper roleMapper) {
         this.roleRepository = roleRepository;
         this.roleMapper = roleMapper;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Khi sort property không tồn tại, dùng {@code Sort.by("id")} thay thế.
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<RoleResponse> getAll(Pageable pageable) {
@@ -36,12 +49,18 @@ public class RoleServiceImpl implements RoleService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public RoleResponse getById(UUID id) {
         return roleMapper.toResponse(findOrThrow(id));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public RoleResponse create(RoleRequest request) {
         if (roleRepository.existsByName(request.getName())) {
@@ -51,6 +70,9 @@ public class RoleServiceImpl implements RoleService {
         return roleMapper.toResponse(roleRepository.save(role));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public RoleResponse update(UUID id, RoleRequest request) {
         Role role = findOrThrow(id);
@@ -63,6 +85,9 @@ public class RoleServiceImpl implements RoleService {
         return roleMapper.toResponse(roleRepository.save(role));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(UUID id) {
         findOrThrow(id);
@@ -71,6 +96,12 @@ public class RoleServiceImpl implements RoleService {
 
     // ── Private helpers ─────────────────────────────────────────────────────────
 
+    /**
+     * Tìm role theo id hoặc ném {@link NotFoundException}.
+     *
+     * @param id UUID
+     * @return {@link Role}
+     */
     private Role findOrThrow(UUID id) {
         return roleRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Role not found with id: " + id));

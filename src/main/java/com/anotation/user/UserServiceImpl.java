@@ -15,8 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
- * User management service — used by ADMIN to create/manage employee accounts.
- * Handles BCrypt password hashing automatically.
+ * Triển khai {@link UserService}: phục vụ quản trị tài khoản và thao tác của chính user đăng nhập.
+ * <p>
+ * Mật khẩu luôn được mã hóa bằng {@link PasswordEncoder} (BCrypt) trước khi lưu; truy vấn phân trang có fallback sort {@code id}
+ * khi sort từ client không hợp lệ.
  */
 @Service
 @Transactional
@@ -26,6 +28,11 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * @param userRepository   persistence user
+     * @param userMapper       map entity ↔ DTO
+     * @param passwordEncoder  mã hóa và so khớp mật khẩu
+     */
     public UserServiceImpl(UserRepository userRepository,
             UserMapper userMapper,
             PasswordEncoder passwordEncoder) {
@@ -34,6 +41,9 @@ public class UserServiceImpl implements UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<UserResponse> getAll(Pageable pageable) {
@@ -45,12 +55,18 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public UserResponse getById(UUID id) {
         return userMapper.toResponse(findOrThrow(id));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public UserResponse getCurrentUser(String username) {
@@ -59,6 +75,9 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(user);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void changePassword(String username, PasswordChangeRequest request) {
         User user = userRepository.findByUsername(username)
@@ -72,6 +91,9 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public UserResponse create(UserCreateRequest request) {
         // 1. Check duplicate
@@ -97,6 +119,9 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(userRepository.save(user));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public UserResponse update(UUID id, UserCreateRequest request) {
         User user = findOrThrow(id);
@@ -123,6 +148,9 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(userRepository.save(user));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(UUID id) {
         findOrThrow(id);
@@ -131,6 +159,9 @@ public class UserServiceImpl implements UserService {
 
     // ── Private helpers ─────────────────────────────────────────────────────────
 
+    /**
+     * Tải user theo id hoặc ném {@link NotFoundException}.
+     */
     private User findOrThrow(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + id));

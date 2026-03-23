@@ -4,6 +4,13 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
+/**
+ * Body request khi reviewer gửi kết quả duyệt cho một annotation.
+ * <p>
+ * {@link #annotationId} và {@link #reviewerId} bắt buộc; {@link #status} phải là
+ * {@link ReviewStatus#APPROVED} hoặc {@link ReviewStatus#REJECTED}. Khi từ chối,
+ * {@link #comment} bắt buộc (kiểm tra thêm ở tầng service).
+ */
 public class ReviewRequest {
 
     @NotNull(message = "Annotation ID is required")

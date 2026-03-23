@@ -2,6 +2,13 @@ package com.anotation.exception;
 
 import java.time.LocalDateTime;
 
+/**
+ * Cấu trúc JSON thống nhất cho lỗi API trả về từ {@link GlobalExceptionHandler}.
+ * <p>
+ * Gồm mã HTTP ({@code status}), nhóm lỗi ngắn ({@code error}), mô tả chi tiết ({@code message}) và
+ * {@code timestamp} thời điểm sinh phản hồi (giúp client log và hỗ trợ).
+ * </p>
+ */
 public class ErrorResponse {
 
     private int status;

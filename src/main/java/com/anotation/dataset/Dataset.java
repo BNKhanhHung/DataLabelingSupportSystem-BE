@@ -7,6 +7,17 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Thực thể JPA đại diện một <strong>dataset</strong> (tập dữ liệu) thuộc một dự án.
+ * <p>
+ * Dataset là đơn vị nhóm các data item để gán nhãn; tên dataset phải là duy nhất trong phạm vi cùng một project
+ * (ràng buộc {@code uq_dataset_name_project} trên cặp {@code project_id} + {@code name}).
+ * Mỗi bản ghi có {@code id} UUID do Hibernate sinh, thời điểm tạo {@code createdAt} được gán tự động khi persist.
+ * Liên kết bắt buộc tới {@link com.anotation.project.Project} qua khóa ngoại {@code project_id}.
+ * </p>
+ *
+ * @see com.anotation.dataset.DatasetRepository
+ */
 @Entity
 @Table(name = "datasets", schema = "public", uniqueConstraints = {
         @UniqueConstraint(name = "uq_dataset_name_project", columnNames = { "project_id", "name" })

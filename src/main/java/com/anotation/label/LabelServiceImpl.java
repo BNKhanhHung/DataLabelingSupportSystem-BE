@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+/**
+ * Triển khai {@link LabelService}: validate project, chống trùng tên, fallback sort khi {@code Pageable} không hợp lệ.
+ */
 @Service
 @Transactional
 public class LabelServiceImpl implements LabelService {

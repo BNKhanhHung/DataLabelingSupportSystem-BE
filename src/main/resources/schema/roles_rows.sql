@@ -1,0 +1,1 @@
+INSERT INTO "public"."roles" ("id", "description", "name") VALUES ('4ce856d5-4ded-40ac-86c1-510bbbff7d93', 'dán nhãn', 'ANNOTATOR'), ('8650c330-777a-4cf7-96c1-d1e3b7573d68', 'Người kiểm duyệt', 'REVIEWER'), ('d4102e67-c925-4c32-a9db-f6642f90b925', 'Quản lý dự án', 'MANAGER');

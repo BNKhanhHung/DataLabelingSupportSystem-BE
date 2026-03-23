@@ -5,6 +5,10 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO tạo/cập nhật project: {@code name} bắt buộc (tối đa 150 ký tự), {@code description} tối đa 500 ký tự,
+ * {@code deadline} tùy chọn (mốc hoàn thành dự kiến).
+ */
 public class ProjectRequest {
 
     @NotBlank(message = "Project name is required")

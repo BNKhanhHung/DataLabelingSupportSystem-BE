@@ -3,6 +3,9 @@ package com.anotation.role;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Payload tạo/cập nhật {@link Role}: tên bắt buộc (tối đa 100 ký tự), mô tả tùy chọn (tối đa 255).
+ */
 public class RoleRequest {
 
     @NotBlank(message = "Role name is required")

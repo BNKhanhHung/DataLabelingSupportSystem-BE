@@ -7,18 +7,26 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Mapper chuyển {@link Project} sang {@link ProjectResponse} và áp dụng {@link ProjectRequest} lên entity.
+ * <p>
+ * Khi có danh sách {@link Task}, trạng thái project ({@link ProjectStatus}) được suy ra bởi {@code computeStatus}
+ * theo thứ tự ưu tiên: có task quá hạn → OVERDUE; tất cả COMPLETED → COMPLETED; có task đã bắt đầu → IN_PROGRESS;
+ * ngược lại NOT_STARTED.
+ * </p>
+ */
 @Component
 public class ProjectMapper {
 
     /**
-     * Convert Entity → Response DTO (without task-based status).
+     * Ánh xạ entity sang DTO; không truyền task nên trạng thái suy ra từ danh sách rỗng (thường là NOT_STARTED).
      */
     public ProjectResponse toResponse(Project project) {
         return toResponse(project, List.of());
     }
 
     /**
-     * Convert Entity → Response DTO with computed ProjectStatus from tasks.
+     * Ánh xạ entity sang DTO kèm {@link ProjectStatus} tính từ danh sách task của project.
      */
     public ProjectResponse toResponse(Project project, List<Task> tasks) {
         ProjectResponse response = new ProjectResponse();
@@ -43,7 +51,7 @@ public class ProjectMapper {
     }
 
     /**
-     * Apply Request DTO → existing Entity (update)
+     * Ghi đè name, description, deadline từ request lên entity đã tồn tại.
      */
     public void updateEntity(ProjectRequest request, Project project) {
         project.setName(request.getName());
@@ -54,13 +62,16 @@ public class ProjectMapper {
     // ── Compute ProjectStatus from tasks ────────────────────────────────────────
 
     /**
-     * Determines the project status based on the current state of its tasks.
-     *
-     * Priority order:
-     * 1. OVERDUE — at least 1 task past dueDate and not COMPLETED/REVIEWED
-     * 2. COMPLETED — all tasks exist and all are COMPLETED
-     * 3. IN_PROGRESS — at least 1 task has moved beyond OPEN
-     * 4. NOT_STARTED — no tasks, or all tasks still OPEN
+     * Suy ra trạng thái tổng thể của project từ tập task hiện có.
+     * <p>
+     * Thứ tự ưu tiên:
+     * </p>
+     * <ol>
+     *   <li>{@link ProjectStatus#OVERDUE} — có ít nhất một task đã quá {@code dueDate} và chưa ở trạng thái kết thúc (COMPLETED/REVIEWED)</li>
+     *   <li>{@link ProjectStatus#COMPLETED} — mọi task đều COMPLETED</li>
+     *   <li>{@link ProjectStatus#IN_PROGRESS} — có ít nhất một task khác OPEN</li>
+     *   <li>{@link ProjectStatus#NOT_STARTED} — không có task hoặc tất cả vẫn OPEN</li>
+     * </ol>
      */
     private ProjectStatus computeStatus(List<Task> tasks) {
         if (tasks == null || tasks.isEmpty()) {

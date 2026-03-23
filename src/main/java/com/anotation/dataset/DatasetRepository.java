@@ -7,6 +7,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 
+/**
+ * Spring Data JPA repository cho {@link Dataset}.
+ * <p>
+ * Cung cấp truy vấn phân trang theo project và các phương thức kiểm tra trùng tên dataset trong cùng project
+ * (dùng khi tạo mới và cập nhật, loại trừ chính bản ghi đang sửa).
+ * </p>
+ */
 @Repository
 public interface DatasetRepository extends JpaRepository<Dataset, UUID> {
 

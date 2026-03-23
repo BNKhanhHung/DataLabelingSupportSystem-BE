@@ -5,6 +5,13 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Entity JPA ánh xạ bảng {@code users} (schema {@code public}): tài khoản đăng nhập hệ thống.
+ * <p>
+ * Lưu thông tin định danh, email, hash mật khẩu, trạng thái tài khoản, {@link SystemRole}, mốc thời gian
+ * và số lần cảnh báo ({@code warnings}) dùng cho nghiệp vụ quá hạn task. {@link PrePersist}/{@link PreUpdate}
+ * gán mặc định role và cập nhật timestamp.
+ */
 @Entity
 @Table(name = "users", schema = "public")
 public class User {
@@ -38,6 +45,9 @@ public class User {
     @Column(name = "warnings", nullable = false)
     private int warnings = 0;
 
+    /**
+     * Trước khi insert: đảm bảo {@link #systemRole} không null (mặc định USER) và gán {@code createdAt}/{@code updatedAt}.
+     */
     @PrePersist
     public void onCreate() {
         Instant now = Instant.now();
@@ -48,6 +58,9 @@ public class User {
         updatedAt = now;
     }
 
+    /**
+     * Trước khi update: cập nhật {@code updatedAt}.
+     */
     @PreUpdate
     public void onUpdate() {
         updatedAt = Instant.now();

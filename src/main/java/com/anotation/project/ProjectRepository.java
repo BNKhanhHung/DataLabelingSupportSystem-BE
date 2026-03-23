@@ -9,6 +9,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Spring Data JPA cho {@link Project}: kiểm tra trùng tên, tìm theo tên chứa chuỗi (phân trang),
+ * và lấy danh sách project có {@code deadline} đã qua mốc thời gian (phục vụ thông báo quá hạn).
+ */
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
     boolean existsByName(String name);

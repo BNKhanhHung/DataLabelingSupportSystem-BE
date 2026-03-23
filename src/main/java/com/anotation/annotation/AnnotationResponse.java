@@ -3,6 +3,13 @@ package com.anotation.annotation;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * DTO JSON trả về cho client sau các thao tác đọc/ghi annotation ({@code GET/POST/PATCH} trên {@code /api/annotations}).
+ * {@code id}: id annotation; {@code taskItemId}, {@code dataItemId}, {@code contentUrl}: bối cảnh dữ liệu và đường dẫn nội dung (ảnh/URL).
+ * {@code annotatorId}, {@code annotatorUsername}: người đã gán nhãn; {@code content}: nội dung nhãn; {@code status}: {@link AnnotationStatus}.
+ * {@code createdAt}, {@code updatedAt}: mốc thời gian lưu trong DB; được điền bởi {@link AnnotationMapper#toResponse(Annotation)}.
+ * Cấu trúc phẳng giúp frontend hiển thị danh sách và chi tiết mà không cần join thủ công nhiều lớp nested.
+ */
 public class AnnotationResponse {
 
     private UUID id;

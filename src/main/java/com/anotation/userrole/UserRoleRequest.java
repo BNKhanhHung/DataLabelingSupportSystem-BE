@@ -18,6 +18,9 @@ import java.util.UUID;
 // CODE MỚI (refactored)
 // ============================================================
 
+/**
+ * Body POST khi gán role cho user: bắt buộc {@link #userId} và {@link #roleId} (UUID của bảng roles).
+ */
 public class UserRoleRequest {
 
     @NotNull(message = "User ID is required")

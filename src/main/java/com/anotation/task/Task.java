@@ -8,6 +8,15 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Entity JPA đại diện một task gán nhãn trong một {@link Project}: một {@link User} annotator,
+ * một {@link User} reviewer, trạng thái {@link TaskStatus}, hạn {@link #dueDate} và thời điểm
+ * tạo {@link #createdAt}.
+ * <p>
+ * Chi tiết dữ liệu cần gán nhãn nằm ở các {@link TaskItem} liên kết. Khi persist lần đầu,
+ * nếu chưa set status thì mặc định {@link TaskStatus#OPEN}; {@link #createdAt} gán trong
+ * {@link #onCreate()}.
+ */
 @Entity
 @Table(name = "tasks", schema = "public")
 public class Task {
@@ -39,6 +48,9 @@ public class Task {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Callback trước insert: đảm bảo có trạng thái mặc định và timestamp tạo.
+     */
     @PrePersist
     public void onCreate() {
         if (status == null)

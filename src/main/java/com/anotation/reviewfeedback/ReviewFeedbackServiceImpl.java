@@ -27,6 +27,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+/**
+ * Triển khai {@link ReviewFeedbackService}: đọc phản hồi review, gửi review với đầy đủ
+ * kiểm tra bảo mật/nghiệp vụ (task SUBMITTED, user hiện tại là reviewer của task, annotation
+ * SUBMITTED, không trùng, comment khi REJECTED), và cập nhật {@link Annotation},
+ * {@link DataItem} tương ứng.
+ */
 @Service
 @Transactional
 public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
@@ -39,6 +45,15 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
 
+    /**
+     * @param reviewFeedbackRepository kho lưu {@link ReviewFeedback}
+     * @param annotationRepository     cập nhật trạng thái annotation
+     * @param taskItemRepository       kho {@link com.anotation.task.TaskItem} (inject theo kiến trúc; có thể phục vụ mở rộng luồng review)
+     * @param taskRepository           truy cập task khi validate
+     * @param dataItemRepository       cập nhật trạng thái data item
+     * @param userRepository           resolve user từ SecurityContext
+     * @param reviewMapper             entity → {@link ReviewResponse}
+     */
     public ReviewFeedbackServiceImpl(ReviewFeedbackRepository reviewFeedbackRepository,
             AnnotationRepository annotationRepository,
             TaskItemRepository taskItemRepository,
@@ -57,6 +72,9 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
 
     // ── Read ─────────────────────────────────────────────────────────────────────
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ReviewResponse> getAll(Pageable pageable) {
@@ -68,12 +86,18 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public ReviewResponse getById(UUID id) {
         return reviewMapper.toResponse(findOrThrow(id));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ReviewResponse> getByTask(UUID taskId, Pageable pageable) {
@@ -87,6 +111,9 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ReviewResponse> getByReviewer(UUID reviewerId, Pageable pageable) {
@@ -102,6 +129,16 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
 
     // ── Review (Create) ──────────────────────────────────────────────────────────
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Luồng: validate task {@link TaskStatus#SUBMITTED}, user đăng nhập khớp {@code reviewerId}
+     * và khớp reviewer gán trên task; annotation phải {@link AnnotationStatus#SUBMITTED};
+     * không cho review hai lần; nếu {@link ReviewStatus#REJECTED} thì bắt buộc comment.
+     * Sau đó lưu {@link ReviewFeedback} và cập nhật annotation/data item (APPROVED → data item
+     * REVIEWED; REJECTED → data item ASSIGNED để annotator làm lại). Trạng thái task tổng thể
+     * chỉ đổi khi reviewer gọi hoàn tất review ở tầng task.
+     */
     @Override
     public ReviewResponse review(ReviewRequest request) {
         // 1. Annotation must exist
@@ -192,11 +229,23 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
 
     // ── Private helpers ─────────────────────────────────────────────────────────
 
+    /**
+     * Tìm {@link ReviewFeedback} theo id hoặc ném {@link NotFoundException}.
+     *
+     * @param id UUID
+     * @return entity
+     */
     private ReviewFeedback findOrThrow(UUID id) {
         return reviewFeedbackRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("ReviewFeedback not found with id: " + id));
     }
 
+    /**
+     * Lấy {@link User} tương ứng principal hiện tại trong {@link SecurityContextHolder}.
+     *
+     * @return user đã xác thực
+     * @throws BadRequestException nếu chưa đăng nhập hoặc không tìm thấy user theo username
+     */
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null) {

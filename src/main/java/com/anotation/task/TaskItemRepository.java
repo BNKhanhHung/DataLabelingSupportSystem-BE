@@ -8,13 +8,28 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Spring Data JPA cho {@link TaskItem}: truy vấn theo task và các đếm phục vụ nghiệp vụ
+ * (data item đang trong task active, số item chưa reviewed, số item chưa có annotation).
+ */
 @Repository
 public interface TaskItemRepository extends JpaRepository<TaskItem, UUID> {
 
+        /**
+         * Tất cả task item thuộc một task.
+         *
+         * @param taskId UUID task
+         * @return danh sách (thứ tự không đảm bảo trừ khi service sort)
+         */
         List<TaskItem> findByTaskId(UUID taskId);
 
-        // Check if a DataItem is already in an ACTIVE task (OPEN, IN_PROGRESS,
-        // SUBMITTED, REVIEWED, OVERDUE)
+        /**
+         * {@code true} nếu data item đã nằm trong ít nhất một task “đang sống” (OPEN, IN_PROGRESS,
+         * OVERDUE, SUBMITTED, REVIEWED) — dùng để tránh gán trùng mẫu vào nhiều luồng active.
+         *
+         * @param dataItemId UUID data item
+         * @return có tồn tại task item như vậy hay không
+         */
         @Query("""
                         SELECT COUNT(ti) > 0 FROM TaskItem ti
                         WHERE ti.dataItem.id = :dataItemId
@@ -26,7 +41,12 @@ public interface TaskItemRepository extends JpaRepository<TaskItem, UUID> {
                         """)
         boolean existsActiveTaskForDataItem(@Param("dataItemId") UUID dataItemId);
 
-        // Count DataItems in a task that are NOT yet REVIEWED
+        /**
+         * Số lượng task item trong task mà data item liên kết chưa đạt {@link com.anotation.dataitem.DataItemStatus#REVIEWED}.
+         *
+         * @param taskId UUID task
+         * @return số lượng (0 nếu tất cả đã reviewed)
+         */
         @Query("""
                         SELECT COUNT(ti) FROM TaskItem ti
                         WHERE ti.task.id = :taskId
@@ -34,7 +54,13 @@ public interface TaskItemRepository extends JpaRepository<TaskItem, UUID> {
                         """)
         long countNonReviewedItemsInTask(@Param("taskId") UUID taskId);
 
-        // Count TaskItems that do NOT have any annotation yet (used by submitForReview)
+        /**
+         * Số task item chưa có bất kỳ {@link com.anotation.annotation.Annotation} nào — dùng trước khi
+         * cho phép annotator nộp task (submit for review).
+         *
+         * @param taskId UUID task
+         * @return số item thiếu annotation
+         */
         @Query("""
                         SELECT COUNT(ti) FROM TaskItem ti
                         WHERE ti.task.id = :taskId

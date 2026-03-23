@@ -16,13 +16,11 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * JWT Authentication Filter — runs before every request.
- *
- * Flow:
- * 1. Extract "Authorization: Bearer <token>" header
- * 2. Validate token using JwtUtil
- * 3. Extract userId, username, systemRole from token
- * 4. Set authentication in SecurityContext with ROLE_ authority
+ * Bộ lọc Spring Security ({@code OncePerRequestFilter}) chạy trước chuỗi xử lý, gắn principal từ JWT cho mỗi request có header hợp lệ.
+ * Đọc header {@code Authorization: Bearer <token>}, xác thực bằng {@link JwtUtil#isTokenValid}; lấy username và claim role để tạo {@link org.springframework.security.authentication.UsernamePasswordAuthenticationToken}.
+ * Authority trong ngữ cảnh: {@code ROLE_} + role trong token (mặc định USER) để khớp {@link SecurityConfig#securityFilterChain}.
+ * Không thiết lập credentials trong token (password null); chi tiết request gắn qua {@link org.springframework.security.web.authentication.WebAuthenticationDetailsSource}.
+ * Nếu không có token hoặc token sai, filter vẫn chuyển tiếp chuỗi để các rule {@code permitAll} hoặc anonymous xử lý.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {

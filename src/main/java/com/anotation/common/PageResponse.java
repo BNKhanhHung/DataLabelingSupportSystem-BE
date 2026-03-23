@@ -5,6 +5,12 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * DTO phân trang chung cho REST API, bọc kết quả {@link org.springframework.data.domain.Page} sau khi map phần tử.
+ * Trường JSON: {@code content} (danh sách phần tử kiểu {@code T}), {@code page}, {@code size}, {@code totalElements}, {@code totalPages}, {@code hasNext}, {@code hasPrevious}.
+ * Factory {@link #from(Page, Function)} map từng phần tử (vd. entity → response) rồi giữ metadata phân trang của Spring Data.
+ * Dùng trong hầu hết controller trả danh sách lớn (annotations, data-items, tasks, …) để client dựng UI phân trang thống nhất.
+ */
 public class PageResponse<T> {
 
     private List<T> content;

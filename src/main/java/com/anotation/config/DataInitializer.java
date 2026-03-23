@@ -25,7 +25,11 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 /**
- * Tự động tạo hệ thống dữ liệu Demo toàn diện khi chạy lần đầu.
+ * {@link org.springframework.boot.CommandLineRunner} chạy sau khi context Spring khởi động: seed dữ liệu demo nếu chưa có user {@code admin}.
+ * Tạo user mẫu (admin, manager, annotator1, reviewer1) với {@link org.springframework.security.crypto.password.PasswordEncoder}, role hệ thống tương ứng.
+ * Khởi tạo role nghiệp vụ trong DB (MANAGER, ANNOTATOR, REVIEWER), một project, gán {@link com.anotation.userrole.UserRole}, nhãn mẫu, dataset và vài {@link com.anotation.dataitem.DataItem} (URL ảnh minh họa).
+ * Nếu {@code admin} đã tồn tại thì ghi log và thoát sớm, tránh trùng lặp dữ liệu khi restart.
+ * Mục đích: môi trường dev/demo có sẵn luồng gán nhãn và review mà không cần nhập tay toàn bộ.
  */
 @Component
 public class DataInitializer implements CommandLineRunner {

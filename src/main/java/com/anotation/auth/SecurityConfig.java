@@ -19,11 +19,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 /**
- * Security Configuration — Authorization Rules
- *
- * - USER (authenticated): GET trên các API (projects, tasks, labels, datasets, data-items, roles, user-roles, users);
- *   đổi mật khẩu (PATCH /api/users/me/password). Không được chỉnh sửa role, user-role, user (trừ đổi mật khẩu).
- * - ADMIN & MANAGER: full access (GET + POST/PUT/PATCH/DELETE) trên quản lý users, roles, user-roles, projects, tasks, labels, datasets, data-items.
+ * Cấu hình bảo mật Spring Security: CORS, tắt CSRF (API stateless), session STATELESS, chèn {@link JwtAuthenticationFilter} trước username/password filter.
+ * Công khai ({@code permitAll}): {@code /api/auth/login}, {@code /api/auth/register}, Swagger/OpenAPI, {@code /api/uploads/**}.
+ * USER đã đăng nhập: GET rộng rãi trên projects, tasks, labels, datasets, data-items, roles, user-roles, users; profile {@code /api/users/me/**}; PATCH đổi mật khẩu; notifications; toàn bộ {@code /api/annotations}, {@code /api/review-feedbacks}; PATCH submit/complete-review/refuse task.
+ * POST/PUT/PATCH/DELETE trên tài nguyên quản trị (users, roles, user-roles, projects, tasks, labels, datasets, data-items): chỉ {@code ADMIN} hoặc {@code MANAGER} ({@code hasAnyRole}).
+ * {@code anyRequest} còn lại yêu cầu ADMIN/MANAGER; CORS whitelist nhiều origin localhost cho frontend dev.
  */
 @Configuration
 @EnableWebSecurity

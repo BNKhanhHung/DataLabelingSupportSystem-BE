@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Request DTO for creating multiple DataItems at once.
- * Manager can upload a batch of image URLs into a dataset in a single API call.
+ * DTO JSON cho tạo hàng loạt data item qua {@code POST /api/data-items/bulk} ({@link DataItemController#bulkCreate}); yêu cầu quyền ADMIN hoặc MANAGER.
+ * {@code datasetId}: dataset đích; bắt buộc, phải tồn tại; {@code contentUrls}: danh sách URL/chuỗi nội dung, ít nhất một phần tử ({@code @NotEmpty}).
+ * {@link DataItemServiceImpl#bulkCreate}: bỏ qua URL rỗng và trùng {@code contentUrl} trong cùng dataset; nếu không tạo được mục nào mới thì báo lỗi 400.
+ * Phù hợp nhập nhanh nhiều ảnh/liên kết từ giao diện quản lý thay vì gọi {@code POST /api/data-items} từng cái.
  */
 public class DataItemBulkRequest {
 

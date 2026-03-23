@@ -29,6 +29,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Triển khai {@link TaskService}: quản lý vòng đời task, phân quyền theo {@link SystemRole},
+ * giới hạn số task đang hoạt động (WIP) mỗi annotator/reviewer, đồng bộ trạng thái {@link com.anotation.dataitem.DataItem},
+ * và tích hợp {@link NotificationService} cho các sự kiện phân công, nộp review, quá hạn, từ chối.
+ * <p>
+ * Các thao tác đọc phân trang có thể fallback sort theo {@code id} khi client gửi sort field không map được
+ * ({@link PropertyReferenceException}).
+ */
 @Service
 @Transactional
 public class TaskServiceImpl implements TaskService {
@@ -47,6 +55,18 @@ public class TaskServiceImpl implements TaskService {
     private final ReviewFeedbackRepository reviewFeedbackRepository;
     private final NotificationService notificationService;
 
+    /**
+     * @param taskRepository         truy cập bảng task
+     * @param taskItemRepository     task items và truy vấn theo task/data item
+     * @param projectRepository      kiểm tra project tồn tại
+     * @param userRepository         user, manager cho thông báo KPI
+     * @param userRoleRepository     kiểm tra role Annotator/Reviewer
+     * @param dataItemRepository     trạng thái và thuộc tính data item
+     * @param taskMapper             map entity → {@link TaskResponse}
+     * @param annotationRepository   tồn tại nhãn, đếm submitted/rejected
+     * @param reviewFeedbackRepository xóa phụ thuộc khi xóa task
+     * @param notificationService    tạo thông báo người dùng
+     */
     public TaskServiceImpl(TaskRepository taskRepository,
             TaskItemRepository taskItemRepository,
             ProjectRepository projectRepository,
@@ -71,10 +91,16 @@ public class TaskServiceImpl implements TaskService {
 
     // ── Read operations ──────────────────────────────────────────────────────────
 
+    /**
+     * Tạo {@link Pageable} an toàn: giữ số trang và kích thước, sort cố định theo {@code id}.
+     */
     private static Pageable safePageable(Pageable pageable) {
         return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id"));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getAll(Pageable pageable) {
@@ -85,12 +111,18 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public TaskResponse getById(UUID id) {
         return toResponse(findOrThrow(id));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public List<TaskItemResponse> getTaskItems(UUID taskId) {
@@ -128,10 +160,15 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    /** Trạng thái đã xong: không hiện trong danh sách "task được giao" của user. */
+    /**
+     * Trạng thái đã xong: không hiện trong danh sách “task được giao” của user.
+     */
     private static final List<TaskStatus> EXCLUDED_STATUSES_FOR_ASSIGNED =
             List.of(TaskStatus.COMPLETED, TaskStatus.REVIEWED);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getByAnnotator(UUID annotatorId, Pageable pageable) {
@@ -146,6 +183,9 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getAssignedInProgressByAnnotator(UUID annotatorId, Pageable pageable) {
@@ -160,6 +200,9 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getByReviewer(UUID reviewerId, Pageable pageable) {
@@ -175,6 +218,9 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getAssignedInProgressByReviewer(UUID reviewerId, Pageable pageable) {
@@ -189,6 +235,9 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> search(String name, TaskStatus status, Pageable pageable) {
@@ -202,6 +251,9 @@ public class TaskServiceImpl implements TaskService {
 
     // ── Create ───────────────────────────────────────────────────────────────────
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TaskResponse create(TaskRequest request) {
         User currentUser = getCurrentUser();
@@ -335,6 +387,9 @@ public class TaskServiceImpl implements TaskService {
 
     // ── Update status ────────────────────────────────────────────────────────────
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TaskResponse updateStatus(UUID id, TaskStatus status) {
         Task task = findOrThrow(id);
@@ -350,6 +405,9 @@ public class TaskServiceImpl implements TaskService {
         return toResponse(task);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TaskResponse updateDueDate(UUID id, java.time.LocalDateTime dueDate) {
         Task task = findOrThrow(id);
@@ -360,6 +418,9 @@ public class TaskServiceImpl implements TaskService {
 
     // ── Annotator: nộp task cho Reviewer ─────────────────────────────────────────
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TaskResponse submitForReview(UUID taskId) {
         Task task = findOrThrow(taskId);
@@ -397,6 +458,9 @@ public class TaskServiceImpl implements TaskService {
 
     // ── Reviewer: hoàn tất review và gửi kết quả ────────────────────────────────
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TaskResponse completeReview(UUID taskId) {
         Task task = findOrThrow(taskId);
@@ -450,6 +514,9 @@ public class TaskServiceImpl implements TaskService {
 
     // ── Overdue tasks ────────────────────────────────────────────────────────────
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> getOverdueTasks(Pageable pageable) {
@@ -464,6 +531,9 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void markOverdueTasks() {
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
@@ -490,6 +560,9 @@ public class TaskServiceImpl implements TaskService {
 
     // ── KPI ──────────────────────────────────────────────────────────────────────
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public KpiResponse getAnnotatorKpi(UUID userId) {
@@ -524,6 +597,9 @@ public class TaskServiceImpl implements TaskService {
 
     // ── Refuse Task ─────────────────────────────────────────────────────────────
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TaskResponse refuseTask(UUID taskId, String reason) {
         Task task = findOrThrow(taskId);
@@ -566,6 +642,9 @@ public class TaskServiceImpl implements TaskService {
         return toResponse(task);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional
     public TaskResponse assign(UUID taskId, UUID annotatorId, UUID reviewerId) {
@@ -613,6 +692,9 @@ public class TaskServiceImpl implements TaskService {
 
     // ── Delete ───────────────────────────────────────────────────────────────────
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(UUID id) {
         Task task = findOrThrow(id);
@@ -628,11 +710,17 @@ public class TaskServiceImpl implements TaskService {
 
     // ── Private helpers ─────────────────────────────────────────────────────────
 
+    /**
+     * Tải task theo id hoặc ném {@link NotFoundException}.
+     */
     private Task findOrThrow(UUID id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Task not found with id: " + id));
     }
 
+    /**
+     * Map {@link Task} sang {@link TaskResponse}, gom danh sách {@code dataItemIds} từ task items.
+     */
     private TaskResponse toResponse(Task task) {
         List<UUID> dataItemIds = taskItemRepository.findByTaskId(task.getId())
                 .stream()
@@ -641,6 +729,9 @@ public class TaskServiceImpl implements TaskService {
         return taskMapper.toResponse(task, dataItemIds);
     }
 
+    /**
+     * Lấy {@link User} đang đăng nhập từ {@link SecurityContextHolder}; lỗi xác thực → {@link BadRequestException}.
+     */
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null) {

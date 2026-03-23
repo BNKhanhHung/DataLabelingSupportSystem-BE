@@ -2,6 +2,10 @@ package com.anotation.label;
 
 import org.springframework.stereotype.Component;
 
+/**
+ * Mapper chuyển {@link Label} ↔ DTO: {@link #toResponse(Label)} đưa thêm id/tên project (làm phẳng),
+ * {@link #updateEntity(LabelRequest, Label)} cập nhật tên, mô tả và màu từ request.
+ */
 @Component
 public class LabelMapper {
 

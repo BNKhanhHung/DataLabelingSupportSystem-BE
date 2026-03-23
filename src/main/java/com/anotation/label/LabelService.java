@@ -5,6 +5,10 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.UUID;
 
+/**
+ * Dịch vụ nghiệp vụ CRUD {@link Label}, tương tự {@link com.anotation.dataset.DatasetService} về phân trang
+ * và xử lý trùng tên trong project.
+ */
 public interface LabelService {
     PageResponse<LabelResponse> getAll(Pageable pageable);
 

@@ -42,8 +42,10 @@ import java.util.UUID;
 // ============================================================
 
 /**
- * User API: danh sách user, lấy theo id/me, tạo/sửa/xóa user, đổi mật khẩu (PATCH /me/password).
- * GET /, /{id}, /me; POST /; PUT /{id}; PATCH /me/password; DELETE /{id}.
+ * REST controller quản lý {@link User} dưới tiền tố {@code /api/users}.
+ * <p>
+ * Cung cấp: liệt kê phân trang, xem theo id, xem hồ sơ user hiện tại ({@code /me}), tạo mới, cập nhật,
+ * đổi mật khẩu cho chính mình ({@code PATCH /me/password}) và xóa user. Phân quyền cụ thể do cấu hình Spring Security quy định.
  */
 @RestController
 @RequestMapping("/api/users")
@@ -52,10 +54,16 @@ public class UserController {
 
     private final UserService userService;
 
+    /**
+     * @param userService dịch vụ nghiệp vụ user
+     */
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
+    /**
+     * GET {@code /api/users} — danh sách user có phân trang và sort (nên dùng field hợp lệ: id, username, email, …).
+     */
     @GetMapping
     @Operation(summary = "Get all users",
             description = "Sort hợp lệ: id, username, email, status, systemRole, createdAt, updatedAt (vd: sort=username,asc). Tránh sort=string.")
@@ -63,18 +71,27 @@ public class UserController {
         return ResponseEntity.ok(userService.getAll(pageable)); // 200
     }
 
+    /**
+     * GET {@code /api/users/{id}} — chi tiết một user.
+     */
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID")
     public ResponseEntity<UserResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getById(id)); // 200
     }
 
+    /**
+     * GET {@code /api/users/me} — hồ sơ user ứng với principal hiện tại.
+     */
     @GetMapping("/me")
     @Operation(summary = "Get current user profile")
     public ResponseEntity<UserResponse> getMe(Authentication authentication) {
         return ResponseEntity.ok(userService.getCurrentUser(authentication.getName()));
     }
 
+    /**
+     * POST {@code /api/users} — tạo user mới; trả về 201 và body {@link UserResponse}.
+     */
     @PostMapping
     @Operation(summary = "Create a new user")
     public ResponseEntity<UserResponse> create(@Valid @RequestBody UserCreateRequest request) {
@@ -82,6 +99,9 @@ public class UserController {
                 .body(userService.create(request)); // 201
     }
 
+    /**
+     * PUT {@code /api/users/{id}} — cập nhật toàn bộ các trường theo {@link UserCreateRequest} (theo quy ước API).
+     */
     @PutMapping("/{id}")
     @Operation(summary = "Update a user")
     public ResponseEntity<UserResponse> update(
@@ -90,6 +110,9 @@ public class UserController {
         return ResponseEntity.ok(userService.update(id, request)); // 200
     }
 
+    /**
+     * PATCH {@code /api/users/me/password} — đổi mật khẩu; thành công trả 204 No Content.
+     */
     @PatchMapping("/me/password")
     @Operation(summary = "Change current user's password")
     public ResponseEntity<Void> changePassword(
@@ -99,6 +122,9 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * DELETE {@code /api/users/{id}} — xóa user; trả 204.
+     */
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a user")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {

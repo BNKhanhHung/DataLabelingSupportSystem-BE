@@ -13,7 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 /**
- * Role API (project-level: Manager/Annotator/Reviewer): CRUD role, gán vào user qua UserRole. GET /, /{id}; POST /; PUT /{id}; DELETE /{id}.
+ * REST API CRUD vai trò ({@link Role}) tại {@code /api/roles}.
+ * <p>
+ * Vai trò định nghĩa quyền/nhãn nghiệp vụ cấp dự án (ví dụ Manager, Annotator, Reviewer). Gán
+ * cho user thường thực hiện qua thực thể liên kết user–role (ngoài controller này).
  */
 @RestController
 @RequestMapping("/api/roles")
@@ -33,12 +36,24 @@ public class RoleController {
         return ResponseEntity.ok(roleService.getAll(pageable)); // 200
     }
 
+    /**
+     * Chi tiết role theo id.
+     *
+     * @param id UUID role
+     * @return HTTP 200
+     */
     @GetMapping("/{id}")
     @Operation(summary = "Get role by ID")
     public ResponseEntity<RoleResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(roleService.getById(id)); // 200
     }
 
+    /**
+     * Tạo role mới; tên phải unique.
+     *
+     * @param request body validate
+     * @return HTTP 201 và {@link RoleResponse}
+     */
     @PostMapping
     @Operation(summary = "Create a new role")
     public ResponseEntity<RoleResponse> create(@Valid @RequestBody RoleRequest request) {
@@ -54,6 +69,12 @@ public class RoleController {
         return ResponseEntity.ok(roleService.update(id, request)); // 200
     }
 
+    /**
+     * Xóa role theo id.
+     *
+     * @param id UUID
+     * @return HTTP 204
+     */
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a role")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {

@@ -22,6 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Triển khai {@link DataItemService} với giao dịch mặc định ghi; các thao tác đọc đánh dấu {@code readOnly} khi chỉ truy vấn.
+ * CRUD và phân trang: fallback sort {@code id} khi tham số sort không hợp lệ; upload validate file, đẩy lên storage, chống trùng URL trong dataset.
+ * Bulk: bỏ qua URL trống/trùng; export merge data item ANNOTATED, REVIEWED và có annotation, sort theo {@code createdAt}, ghép nhãn từ {@link AnnotationRepository}.
+ * Cập nhật status trực tiếp trên entity; xóa sau khi kiểm tra tồn tại ({@link com.anotation.exception.NotFoundException}).
+ */
 @Service
 @Transactional
 public class DataItemServiceImpl implements DataItemService {

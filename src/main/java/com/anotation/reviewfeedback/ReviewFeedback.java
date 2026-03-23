@@ -8,6 +8,13 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Entity JPA lưu một lần reviewer duyệt/từ chối cho đúng một {@link Annotation}.
+ * <p>
+ * Ràng buộc duy nhất {@code uq_review_annotation}: mỗi annotation chỉ được có tối đa một
+ * bản ghi phản hồi review. Liên kết {@code reviewer} trỏ tới {@link User} thực hiện review.
+ * {@link #createdAt} được gán tự động trong {@link #onCreate()}.
+ */
 @Entity
 @Table(name = "review_feedbacks", schema = "public", uniqueConstraints = {
         @UniqueConstraint(name = "uq_review_annotation", columnNames = { "annotation_id" })
@@ -37,6 +44,9 @@ public class ReviewFeedback {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Callback JPA trước khi insert: gán thời điểm tạo bản ghi.
+     */
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();

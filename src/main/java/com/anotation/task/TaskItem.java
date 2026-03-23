@@ -6,6 +6,12 @@ import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
 
+/**
+ * Liên kết một {@link Task} với một {@link com.anotation.dataitem.DataItem}: một dòng trong
+ * task tương ứng một mẫu dữ liệu cần gán nhãn.
+ * <p>
+ * Ràng buộc unique {@code (task_id, data_item_id)} ngăn gán trùng cùng data item trong một task.
+ */
 @Entity
 @Table(name = "task_items", schema = "public", uniqueConstraints = {
         @UniqueConstraint(name = "uq_taskitem_task_dataitem", columnNames = { "task_id", "data_item_id" })

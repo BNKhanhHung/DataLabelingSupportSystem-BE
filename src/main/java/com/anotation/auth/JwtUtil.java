@@ -12,13 +12,11 @@ import java.util.Date;
 import java.util.UUID;
 
 /**
- * Utility class for JWT token generation and validation.
- *
- * Token claims:
- * - subject = userId (UUID string)
- * - "username" = username
- * - "role" = system role (USER / ADMIN)
- * - expiration = configurable (default 24h)
+ * Tiện ích tạo và đọc JWT (thư viện JJWT), bean Spring inject secret và thời hạn từ cấu hình.
+ * Claim {@code subject}: UUID người dùng dạng chuỗi; claim tùy chỉnh {@code username}, {@code role} (tên {@link com.anotation.user.SystemRole}) phục vụ filter và ứng dụng.
+ * {@code jwt.secret} và {@code jwt.expiration-ms} có giá trị mặc định trong code nếu thiếu file cấu hình; secret phải đủ dài cho HMAC-SHA.
+ * {@code generateToken} ký HMAC; {@code getUserIdFromToken}, {@code getUsernameFromToken}, {@code getRoleFromToken} parse payload; {@code isTokenValid} bắt mọi lỗi và trả false.
+ * Dùng chung cho {@link AuthService} (cấp token sau login) và {@link JwtAuthenticationFilter} (xác thực mỗi request).
  */
 @Component
 public class JwtUtil {

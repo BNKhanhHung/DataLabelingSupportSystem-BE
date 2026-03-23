@@ -3,6 +3,9 @@ package com.anotation.label;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * DTO trả về thông tin label: định danh, nội dung hiển thị, màu, thông tin project (id + tên) và mốc thời gian tạo/cập nhật.
+ */
 public class LabelResponse {
 
     private UUID id;

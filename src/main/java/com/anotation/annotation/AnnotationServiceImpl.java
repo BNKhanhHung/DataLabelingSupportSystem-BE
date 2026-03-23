@@ -28,6 +28,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Triển khai {@link AnnotationService}: toàn bộ thao tác annotation trong một ngữ cảnh giao dịch ({@code @Transactional}).
+ * Đọc: phân trang an toàn khi sort không hợp lệ (fallback sort theo {@code id}); map sang {@link AnnotationResponse} qua {@link AnnotationMapper}.
+ * Nộp nhãn: xác thực task item, khớp user hiện tại với annotator của task, data item phải ASSIGNED, không trùng annotation cho cùng task item; cập nhật data item sang ANNOTATED và task OPEN→IN_PROGRESS.
+ * Sửa nội dung: chỉ annotator sở hữu và chỉ khi REJECTED; xóa {@link com.anotation.reviewfeedback.ReviewFeedback} cũ, đặt lại SUBMITTED và data item ANNOTATED.
+ * Xóa: kiểm tra tồn tại rồi gọi repository; lấy user hiện tại từ {@link org.springframework.security.core.context.SecurityContextHolder}.
+ */
 @Service
 @Transactional
 public class AnnotationServiceImpl implements AnnotationService {

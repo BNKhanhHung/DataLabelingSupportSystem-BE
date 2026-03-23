@@ -9,10 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * AuthService — handles Login only.
- *
- * Account creation is done by ADMIN via /api/users (UserServiceImpl).
- * There is NO self-registration in this system.
+ * Dịch vụ xác thực đăng nhập: tìm user theo username hoặc email, kiểm tra mật khẩu bằng {@link org.springframework.security.crypto.password.PasswordEncoder}.
+ * Phát hành JWT chứa id user, username và tên vai ({@link com.anotation.user.SystemRole}) qua {@link JwtUtil#generateToken}; trả về {@link AuthResponse}.
+ * Giao dịch chỉ đọc ({@code @Transactional(readOnly = true)}) vì không ghi DB trong luồng login.
+ * Tạo tài khoản hàng loạt hoặc có role đặc biệt do Admin/Manager thực hiện qua {@code /api/users}; đăng ký công khai USER nằm ở {@link AuthController#register}.
+ * Lỗi đăng nhập thống nhất dưới dạng {@link com.anotation.exception.BadRequestException} để không lộ chi tiết user tồn tại hay không.
  */
 @Service
 @Transactional(readOnly = true)

@@ -3,8 +3,10 @@ package com.anotation.task;
 import java.util.UUID;
 
 /**
- * KPI (Key Performance Indicator) response for a user.
- * Used by Manager to evaluate Annotator/Reviewer performance.
+ * DTO chỉ số hiệu suất (KPI) cho một user, phục vụ Manager đánh giá Annotator/Reviewer.
+ * <p>
+ * Gồm số lượng task (tổng, hoàn thành, quá hạn), thống kê annotation (tổng, duyệt, từ chối)
+ * và tỷ lệ duyệt {@link #approvalRate} (phần trăm, do tầng service tính).
  */
 public class KpiResponse {
 

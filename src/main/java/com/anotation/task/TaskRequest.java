@@ -7,6 +7,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Payload tạo {@link Task} mới: project, annotator, reviewer, danh sách {@link #dataItemIds}
+ * không rỗng, và tùy chọn {@link #dueDate}.
+ */
 public class TaskRequest {
 
     @NotNull(message = "Project ID is required")

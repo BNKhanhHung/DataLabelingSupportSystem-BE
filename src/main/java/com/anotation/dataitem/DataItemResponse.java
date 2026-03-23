@@ -3,6 +3,12 @@ package com.anotation.dataitem;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * DTO JSON trả về cho hầu hết endpoint data item (danh sách, chi tiết, sau create/upload/bulk/patch).
+ * {@code id}: khóa; {@code datasetId}, {@code datasetName}: ngữ cảnh dataset; {@code contentUrl}, {@code metadata}: dữ liệu hiển thị/gán nhãn.
+ * {@code status}: {@link DataItemStatus}; {@code createdAt}: thời điểm tạo bản ghi.
+ * Được điền bởi {@link DataItemMapper#toResponse(DataItem)}; là cơ sở trước khi bổ sung {@code label} trong {@link DataItemExportResponse}.
+ */
 public class DataItemResponse {
 
     private UUID id;

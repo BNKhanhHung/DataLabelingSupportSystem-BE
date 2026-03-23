@@ -7,6 +7,13 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Thực thể JPA cho một phần tử dữ liệu (ảnh, file, URL) thuộc một {@link com.anotation.dataset.Dataset} trong dự án gán nhãn.
+ * {@code contentUrl}: đường dẫn hoặc URL nội dung (tối đa 1000 ký tự); {@code metadata}: JSON/text tùy chọn mô tả thêm.
+ * {@link DataItemStatus}: vòng đời từ NEW → ASSIGNED → ANNOTATED → REVIEWED; mặc định NEW khi {@code @PrePersist}.
+ * Bảng {@code public.data_items}; quan hệ Many-to-One tới dataset; không có {@code updatedAt} trong schema hiện tại.
+ * Đồng bộ với API {@code /api/data-items} và luồng task/annotation khi annotator nộp hoặc reviewer duyệt.
+ */
 @Entity
 @Table(name = "data_items", schema = "public")
 public class DataItem {

@@ -4,8 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request DTO for refusing (declining) an assigned task.
- * Both Annotator and Reviewer can refuse a task with a mandatory reason.
+ * Body khi annotator hoặc reviewer từ chối nhận/giữ task đã được giao.
+ * <p>
+ * {@link #reason} bắt buộc, độ dài 10–500 ký tự; điều kiện trạng thái task cho phép từ chối
+ * do {@link TaskService#refuseTask} xử lý.
  */
 public class TaskRefuseRequest {
 

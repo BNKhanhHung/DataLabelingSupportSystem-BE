@@ -16,8 +16,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * DataItem API: CRUD data item, lấy theo dataset (và status), upload file, bulk tạo từ URL. Ảnh phục vụ qua /api/uploads/{folder}/{filename}.
- * GET /, /{id}, /dataset/{id}, /dataset/{id}/status/{status}; POST /, /upload (multipart), /bulk; PATCH /{id}/status; DELETE /{id}.
+ * REST controller quản lý data item; tiền tố {@code /api/data-items}. GET (danh sách phân trang, theo id, theo dataset, theo dataset+status), export đã gán nhãn.
+ * {@code GET /export?projectId=}: trả {@link java.util.List}{@code <}{@link DataItemExportResponse}{@code >} cho xuất CSV/JSON kèm cột nhãn.
+ * POST: tạo một bản ghi ({@link DataItemRequest}), upload file multipart ({@code /upload}), bulk URL ({@code /bulk}); PATCH cập nhật {@link DataItemStatus}; DELETE xóa theo id.
+ * Phân quyền: USER được GET; thay đổi (POST/PATCH/DELETE) chỉ ADMIN/MANAGER theo {@link com.anotation.auth.SecurityConfig}; file upload lưu qua storage, URL có thể trỏ {@code /api/uploads/...}.
+ * OpenAPI tag {@code DataItem}; hỗ trợ sort an toàn trên một số endpoint (vd. id, status, createdAt, contentUrl).
  */
 @RestController
 @RequestMapping("/api/data-items")

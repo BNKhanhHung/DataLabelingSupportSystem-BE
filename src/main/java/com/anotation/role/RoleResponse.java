@@ -2,6 +2,9 @@ package com.anotation.role;
 
 import java.util.UUID;
 
+/**
+ * DTO phản hồi thông tin vai trò cho client.
+ */
 public class RoleResponse {
 
     private UUID id;

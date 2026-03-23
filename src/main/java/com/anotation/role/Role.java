@@ -4,6 +4,12 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.UuidGenerator;
 import java.util.UUID;
 
+/**
+ * Entity JPA vai trò người dùng trong hệ thống (ví dụ Manager, Annotator, Reviewer).
+ * <p>
+ * Tên vai trò {@link #name} là duy nhất; có thể gán cho user qua bảng liên kết user-role
+ * tùy thiết kế schema. Mô tả {@link #description} tùy chọn.
+ */
 @Entity
 @Table(name = "roles", schema = "public")
 public class Role {

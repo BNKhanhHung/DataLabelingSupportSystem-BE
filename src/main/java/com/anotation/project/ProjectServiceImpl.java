@@ -16,6 +16,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Triển khai {@link ProjectService}: CRUD dự án, tìm theo tên, và map sang
+ * {@link ProjectResponse} kèm {@link ProjectStatus} suy ra từ danh sách {@link Task}
+ * của dự án.
+ * <p>
+ * Mọi phương thức ghi đều chạy trong transaction; các thao tác đọc dùng
+ * {@code @Transactional(readOnly = true)} khi có thể.
+ */
 @Service
 @Transactional
 public class ProjectServiceImpl implements ProjectService {
@@ -24,6 +32,11 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectMapper projectMapper;
     private final TaskRepository taskRepository;
 
+    /**
+     * @param projectRepository lưu trữ {@link Project}
+     * @param projectMapper     chuyển entity ↔ DTO
+     * @param taskRepository    dùng để lấy task theo project khi tính trạng thái tổng hợp
+     */
     public ProjectServiceImpl(ProjectRepository projectRepository,
             ProjectMapper projectMapper,
             TaskRepository taskRepository) {
@@ -32,6 +45,9 @@ public class ProjectServiceImpl implements ProjectService {
         this.taskRepository = taskRepository;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ProjectResponse> getAll(Pageable pageable) {
@@ -43,6 +59,9 @@ public class ProjectServiceImpl implements ProjectService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ProjectResponse> searchByName(String name, Pageable pageable) {
@@ -59,6 +78,9 @@ public class ProjectServiceImpl implements ProjectService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
     public ProjectResponse getById(UUID id) {
@@ -66,6 +88,11 @@ public class ProjectServiceImpl implements ProjectService {
         return toResponseWithStatus(project);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Nếu entity sau khi map không có {@code deadline}, gán mặc định 7 ngày kể từ thời điểm tạo.
+     */
     @Override
     public ProjectResponse create(ProjectRequest request) {
         if (projectRepository.existsByName(request.getName())) {
@@ -80,6 +107,9 @@ public class ProjectServiceImpl implements ProjectService {
         return toResponseWithStatus(projectRepository.save(project));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ProjectResponse update(UUID id, ProjectRequest request) {
         Project project = findOrThrow(id);
@@ -92,6 +122,9 @@ public class ProjectServiceImpl implements ProjectService {
         return toResponseWithStatus(projectRepository.save(project));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(UUID id) {
         findOrThrow(id);
@@ -100,13 +133,23 @@ public class ProjectServiceImpl implements ProjectService {
 
     // ── Private helpers ─────────────────────────────────────────────────────────
 
+    /**
+     * Tìm dự án theo id hoặc ném {@link NotFoundException}.
+     *
+     * @param id UUID dự án
+     * @return entity {@link Project}
+     */
     private Project findOrThrow(UUID id) {
         return projectRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Project not found with id: " + id));
     }
 
     /**
-     * Convert project to response with computed status from its tasks.
+     * Chuyển {@link Project} sang {@link ProjectResponse}, đồng thời tính
+     * {@link ProjectStatus} dựa trên toàn bộ {@link Task} thuộc dự án (không phân trang).
+     *
+     * @param project entity dự án
+     * @return DTO phản hồi kèm trạng thái tổng hợp
      */
     private ProjectResponse toResponseWithStatus(Project project) {
         List<Task> tasks = taskRepository.findByProjectId(project.getId(),

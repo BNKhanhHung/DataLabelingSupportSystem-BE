@@ -5,6 +5,10 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Thực thể dự án ({@code projects}): tên duy nhất toàn hệ thống, mô tả tùy chọn, thời điểm tạo và
+ * {@code deadline} tùy chọn (dùng cho logic quá hạn cấp project cùng các aggregate dataset/label/task).
+ */
 @Entity
 @Table(name = "projects", schema = "public")
 public class Project {

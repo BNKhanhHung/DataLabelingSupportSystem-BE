@@ -36,6 +36,12 @@ import java.util.UUID;
 // CODE MỚI (refactored)
 // ============================================================
 
+/**
+ * Entity gán một {@link com.anotation.role.Role} (ví dụ Annotator, Reviewer, Manager theo bảng roles) cho {@link User}.
+ * <p>
+ * Ràng buộc duy nhất {@code (user_id, role_id)} ngăn gán trùng cùng một role cho cùng user. {@link #assignedAt}
+ * được ghi nhận lúc tạo bản ghi.
+ */
 @Entity
 @Table(name = "user_roles", schema = "public", uniqueConstraints = {
         @UniqueConstraint(name = "uq_user_role", columnNames = { "user_id", "role_id" })
@@ -58,6 +64,9 @@ public class UserRole {
     @Column(name = "assigned_at", nullable = false, updatable = false)
     private LocalDateTime assignedAt;
 
+    /**
+     * Gán thời điểm phân quyền khi insert.
+     */
     @PrePersist
     public void onCreate() {
         assignedAt = LocalDateTime.now();

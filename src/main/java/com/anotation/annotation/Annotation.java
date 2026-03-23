@@ -8,6 +8,13 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Thực thể JPA biểu diễn một bản ghi gán nhãn (annotation) cho một {@link com.anotation.task.TaskItem} cụ thể trong hệ thống gán nhãn dữ liệu.
+ * Mỗi task item chỉ được phép có tối đa một annotation (ràng buộc duy nhất trên {@code task_item_id}).
+ * Liên kết tới người gán nhãn ({@link com.anotation.user.User}) và lưu nội dung nhãn dạng văn bản ({@code content}), trạng thái duyệt qua {@link AnnotationStatus}.
+ * Các mốc thời gian {@code createdAt} và {@code updatedAt} được gán tự động trong {@code @PrePersist} và {@code @PreUpdate}.
+ * Bảng ánh xạ: {@code public.annotations}; dùng chung với API REST {@code /api/annotations} và luồng reviewer phê duyệt/từ chối.
+ */
 @Entity
 @Table(name = "annotations", schema = "public", uniqueConstraints = {
         @UniqueConstraint(name = "uq_annotation_task_item", columnNames = { "task_item_id" })

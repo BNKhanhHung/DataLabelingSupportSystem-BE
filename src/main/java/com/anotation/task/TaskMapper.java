@@ -6,9 +6,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Map {@link Task} + danh sách id data item sang {@link TaskResponse}: làm phẳng project,
+ * annotator, reviewer và tính cờ {@link TaskResponse#setOverdue(boolean)} khi quá hạn và
+ * task chưa ở trạng thái kết thúc (COMPLETED/REVIEWED).
+ */
 @Component
 public class TaskMapper {
 
+    /**
+     * @param task         entity task (quan hệ project/annotator/reviewer đã load)
+     * @param dataItemIds  danh sách id data item gán trong task (từ task items)
+     * @return DTO đầy đủ cho API
+     */
     public TaskResponse toResponse(Task task, List<UUID> dataItemIds) {
         TaskResponse response = new TaskResponse();
         response.setId(task.getId());

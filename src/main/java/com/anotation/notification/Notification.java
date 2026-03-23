@@ -7,6 +7,14 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Thực thể thông báo trong hệ thống: gắn với một {@link com.anotation.user.User}, có loại ({@code type}),
+ * tiêu đề, nội dung, tùy chọn tham chiếu tới thực thể liên quan ({@code relatedEntityType} / {@code relatedEntityId}),
+ * cờ đã đọc và thời điểm tạo.
+ * <p>
+ * Dùng cho thông báo nội bộ (ví dụ task/project quá hạn); không chứa logic gửi push/email.
+ * </p>
+ */
 @Entity
 @Table(name = "notifications", schema = "public")
 public class Notification {

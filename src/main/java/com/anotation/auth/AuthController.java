@@ -11,8 +11,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Auth API: đăng nhập (JWT) và đăng ký công khai (chỉ tạo USER). Frontend gọi POST /api/auth/login (login.html); register dùng POST /api/auth/register. User khác do Admin tạo qua POST /api/users.
- * POST /login (username/email + password → token, user); POST /register (username, email, password → user).
+ * REST controller xác thực và đăng ký công khai; tiền tố {@code /api/auth}.
+ * {@code POST /login}: nhận {@link LoginRequest} (username hoặc email + mật khẩu), trả {@link AuthResponse} gồm JWT và thông tin user ({@link AuthService#login}).
+ * {@code POST /register}: nhận {@link com.anotation.user.UserCreateRequest}, luôn tạo tài khoản vai trò USER (systemRole bị ghi đè {@code null} rồi service gán USER), status ACTIVE; trả {@link com.anotation.user.UserResponse} (201).
+ * Đăng ký công khai bổ sung cho việc Admin/Manager tạo user qua {@code POST /api/users} với role tùy chỉnh.
+ * Hai endpoint trên được {@link SecurityConfig} cho phép {@code permitAll}; các API khác yêu cầu Bearer token.
+ * OpenAPI tag: {@code Authentication}.
  */
 @RestController
 @RequestMapping("/api/auth")

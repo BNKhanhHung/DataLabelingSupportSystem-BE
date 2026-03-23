@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 /**
- * UserRole API: gán role (Manager/Annotator/Reviewer) cho user trong project. GET /, /{id}, /user/{userId}; POST / (assign); DELETE /{id}.
+ * REST API quản lý bản ghi {@link UserRole}: gán role nghiệp vụ (Annotator, Reviewer, …) cho user.
+ * <p>
+ * Base path {@code /api/user-roles}: liệt kê, tra cứu theo id, theo user, tạo gán mới (POST) và xóa gán (DELETE).
  */
 @RestController
 @RequestMapping("/api/user-roles")
@@ -22,10 +24,16 @@ public class UserRoleController {
 
     private final UserRoleService userRoleService;
 
+    /**
+     * @param userRoleService dịch vụ user-role
+     */
     public UserRoleController(UserRoleService userRoleService) {
         this.userRoleService = userRoleService;
     }
 
+    /**
+     * GET {@code /api/user-roles} — tất cả assignment phân trang.
+     */
     @GetMapping
     @Operation(summary = "Get all user-role assignments",
             description = "Sort hợp lệ: id (vd: sort=id,asc). Tránh sort=string.")
@@ -33,12 +41,18 @@ public class UserRoleController {
         return ResponseEntity.ok(userRoleService.getAll(pageable)); // 200
     }
 
+    /**
+     * GET {@code /api/user-roles/{id}} — một assignment theo UUID.
+     */
     @GetMapping("/{id}")
     @Operation(summary = "Get assignment by ID")
     public ResponseEntity<UserRoleResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(userRoleService.getById(id)); // 200
     }
 
+    /**
+     * GET {@code /api/user-roles/user/{userId}} — mọi role đã gán cho user đó, phân trang.
+     */
     @GetMapping("/user/{userId}")
     @Operation(summary = "Get all roles assigned to a user",
             description = "Sort hợp lệ: id (vd: sort=id,asc). Tránh sort=string.")
@@ -48,6 +62,9 @@ public class UserRoleController {
         return ResponseEntity.ok(userRoleService.getByUser(userId, pageable)); // 200
     }
 
+    /**
+     * POST {@code /api/user-roles} — gán role cho user; 201 Created nếu thành công.
+     */
     @PostMapping
     @Operation(summary = "Assign a role to user")
     public ResponseEntity<UserRoleResponse> assign(@Valid @RequestBody UserRoleRequest request) {
@@ -55,6 +72,9 @@ public class UserRoleController {
                 .body(userRoleService.assign(request)); // 201
     }
 
+    /**
+     * DELETE {@code /api/user-roles/{id}} — gỡ một assignment; 204 No Content.
+     */
     @DeleteMapping("/{id}")
     @Operation(summary = "Remove a role assignment")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {

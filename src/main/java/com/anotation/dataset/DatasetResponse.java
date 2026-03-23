@@ -3,6 +3,13 @@ package com.anotation.dataset;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * DTO đầu ra trả về cho client sau khi đọc hoặc ghi dataset.
+ * <p>
+ * Chứa định danh, tên, mô tả, thời điểm tạo và thông tin project đã làm phẳng ({@code projectId}, {@code projectName})
+ * để client hiển thị mà không cần nested object project đầy đủ.
+ * </p>
+ */
 public class DatasetResponse {
 
     private UUID id;

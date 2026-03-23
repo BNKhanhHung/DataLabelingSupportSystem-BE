@@ -17,8 +17,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Phục vụ file tĩnh đã upload (ảnh/data item). Frontend dùng baseUrl + /api/uploads/{folder}/{filename} để hiển thị ảnh (project-detail, annotator-label, reviewer-task-review).
- * GET /{folder}/{filename} → trả file (content-type theo loại file).
+ * Phục vụ file tĩnh đã lưu cục bộ bởi {@link SupabaseStorageService#saveLocally}.
+ * <p>
+ * Frontend ghép {@code app.base-url} + {@code /api/uploads/{folder}/{filename}} để hiển thị
+ * ảnh/nội dung data item (màn hình chi tiết dự án, gán nhãn, reviewer xem bài). Content-Type
+ * được suy ra bằng {@link Files#probeContentType} khi có thể.
+ * <p>
+ * Có kiểm tra chống path traversal ({@code ..}, {@code /}, {@code \}) trên {@code folder} và {@code filename}.
  */
 @RestController
 @RequestMapping("/api/uploads")
@@ -26,11 +31,22 @@ public class UploadController {
 
     private final Path uploadRoot;
 
+    /**
+     * @param uploadDir cấu hình {@code app.upload.dir} (chuẩn hóa tuyệt đối)
+     */
     public UploadController(@Value("${app.upload.dir:${user.home}/.data-labeling/uploads}") String uploadDir) {
         String dir = uploadDir != null && !uploadDir.isBlank() ? uploadDir : System.getProperty("user.home") + "/.data-labeling/uploads";
         this.uploadRoot = Paths.get(dir).toAbsolutePath().normalize();
     }
 
+    /**
+     * Đọc file từ đĩa và trả về dạng {@link Resource} kèm {@link MediaType} phù hợp.
+     *
+     * @param folder   thư mục con (một segment, không chứa ký tự nguy hiểm)
+     * @param filename tên file đã lưu
+     * @return HTTP 200 và body file
+     * @throws NotFoundException nếu path không hợp lệ hoặc file không tồn tại
+     */
     @GetMapping("/{folder}/{filename}")
     public ResponseEntity<Resource> serve(
             @PathVariable String folder,

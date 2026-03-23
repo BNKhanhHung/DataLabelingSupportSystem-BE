@@ -13,8 +13,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 /**
- * Project API: CRUD dự án, tìm theo tên. Response có status (OPEN/IN_PROGRESS/OVERDUE/COMPLETED) và deadline.
- * GET /, /{id}, /search; POST /; PUT /{id}; DELETE /{id}.
+ * REST controller quản lý <strong>project</strong>, gốc {@code /api/projects}.
+ * <p>
+ * Hỗ trợ CRUD, tìm kiếm theo tên (contains, không phân biệt hoa thường) và phân trang.
+ * {@link com.anotation.project.ProjectResponse} thường kèm trạng thái tổng hợp từ task
+ * (ví dụ NOT_STARTED, IN_PROGRESS, OVERDUE, COMPLETED) và {@code deadline}.
+ * </p>
  */
 @RestController
 @RequestMapping("/api/projects")

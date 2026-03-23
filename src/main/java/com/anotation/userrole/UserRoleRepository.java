@@ -19,15 +19,25 @@ import java.util.UUID;
 // CODE MỚI (refactored)
 // ============================================================
 
+/**
+ * Spring Data JPA cho {@link UserRole} (khóa chính {@link UUID}): kiểm tra trùng gán, phân trang theo user,
+ * và kiểm tra user có role theo tên (không phân biệt hoa thường) — phục vụ ví dụ {@code TaskServiceImpl}.
+ */
 @Repository
 public interface UserRoleRepository extends JpaRepository<UserRole, UUID> {
 
-    // Check duplicate: cùng user + role
+    /**
+     * {@code true} nếu đã tồn tại bản ghi cùng {@code userId} và {@code roleId}.
+     */
     boolean existsByUserIdAndRoleId(UUID userId, UUID roleId);
 
-    // Lấy tất cả assignments của 1 user
+    /**
+     * Tất cả assignment của một user, phân trang.
+     */
     Page<UserRole> findByUserId(UUID userId, Pageable pageable);
 
-    // Role-name check: used by TaskServiceImpl to validate annotator/reviewer
+    /**
+     * User có role với tên cho trước hay không (dùng khi validate Annotator/Reviewer).
+     */
     boolean existsByUserIdAndRoleNameIgnoreCase(UUID userId, String roleName);
 }

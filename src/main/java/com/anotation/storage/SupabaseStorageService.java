@@ -16,6 +16,14 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.UUID;
 
+/**
+ * Dịch vụ upload file: ưu tiên Supabase Storage khi cấu hình hợp lệ; nếu chưa cấu hình
+ * (URL placeholder), lỗi mạng hoặc HTTP lỗi từ Supabase thì lưu xuống đĩa cục bộ dưới
+ * {@code app.upload.dir} và trả URL phục vụ qua {@link UploadController}.
+ * <p>
+ * Các tham số: {@code supabase.url}, {@code supabase.service-key}, {@code supabase.storage.bucket},
+ * {@code app.upload.dir}, {@code app.base-url}.
+ */
 @Service
 public class SupabaseStorageService {
 
@@ -28,6 +36,15 @@ public class SupabaseStorageService {
     private final String baseUrl;
     private final HttpClient httpClient;
 
+    /**
+     * Khởi tạo client HTTP, chuẩn hóa đường dẫn upload tuyệt đối và {@code baseUrl} (bỏ slash cuối).
+     *
+     * @param supabaseUrl URL dự án Supabase
+     * @param serviceKey  service role key (Bearer + apikey)
+     * @param bucket      tên bucket storage
+     * @param uploadDir   thư mục lưu local (mặc định dưới user home nếu trống)
+     * @param baseUrl     URL gốc ứng dụng để ghép link file local
+     */
     public SupabaseStorageService(
             @Value("${supabase.url}") String supabaseUrl,
             @Value("${supabase.service-key}") String serviceKey,
@@ -47,8 +64,14 @@ public class SupabaseStorageService {
     }
 
     /**
-     * Upload file: nếu Supabase chưa cấu hình (url chứa "placeholder") thì lưu local.
-     * Nếu đã cấu hình Supabase thì thử gửi lên Supabase; nếu thất bại thì fallback lưu local.
+     * Upload file: nếu Supabase chưa cấu hình (URL chứa placeholder) thì chỉ lưu local.
+     * Nếu đã cấu hình thì gọi API Storage; mọi exception được nuốt và fallback lưu local để
+     * luồng upload không chết hoàn toàn khi Supabase tạm lỗi.
+     *
+     * @param file   multipart từ request
+     * @param folder thư mục con (prefix object path / thư mục trên đĩa)
+     * @return URL công khai (Supabase public object) hoặc URL ứng dụng {@code /api/uploads/...}
+     * @throws BadRequestException nếu ghi local thất bại (IOException)
      */
     public String upload(MultipartFile file, String folder) {
         if (useLocalStorage()) {
@@ -62,12 +85,23 @@ public class SupabaseStorageService {
         }
     }
 
+    /**
+     * @return {@code true} khi không có URL hoặc URL vẫn là placeholder (dev / chưa cấu hình)
+     */
     private boolean useLocalStorage() {
         if (supabaseUrl == null) return true;
         String u = supabaseUrl.trim();
         return u.isEmpty() || u.contains(SUPABASE_PLACEHOLDER);
     }
 
+    /**
+     * Ghi file vào {@code uploadDir/folder} với tên {@code UUID_originalSanitized}.
+     *
+     * @param file   nội dung upload
+     * @param folder thư mục con an toàn (không chứa .. — caller chịu trách nhiệm)
+     * @return URL tuyệt đối tới endpoint serve file
+     * @throws BadRequestException khi tạo thư mục/transfer thất bại
+     */
     private String saveLocally(MultipartFile file, String folder) {
         String safeName = sanitizeFilename(file.getOriginalFilename());
         String storedName = UUID.randomUUID() + "_" + safeName;
@@ -82,6 +116,14 @@ public class SupabaseStorageService {
         }
     }
 
+    /**
+     * PUT object lên Supabase Storage (upsert), trả URL public sau khi thành công.
+     *
+     * @param file   multipart
+     * @param folder prefix thư mục trong bucket
+     * @return URL public Supabase
+     * @throws BadRequestException khi HTTP không 2xx, interrupted, hoặc IOException đọc bytes
+     */
     private String uploadToSupabase(MultipartFile file, String folder) {
         String safeName = sanitizeFilename(file.getOriginalFilename());
         String objectPath = folder + "/" + UUID.randomUUID() + "_" + safeName;
@@ -115,6 +157,9 @@ public class SupabaseStorageService {
         return supabaseUrl + "/storage/v1/object/public/" + bucket + "/" + objectPath;
     }
 
+    /**
+     * Lấy tên file cuối, thay khoảng trắng bằng {@code _}; null/blank → {@code "file"}.
+     */
     private String sanitizeFilename(String original) {
         if (original == null || original.isBlank()) {
             return "file";
@@ -122,6 +167,9 @@ public class SupabaseStorageService {
         return Paths.get(original).getFileName().toString().replaceAll("\\s+", "_");
     }
 
+    /**
+     * @return {@code Content-Type} của multipart hoặc {@code application/octet-stream}
+     */
     private String contentTypeOrDefault(MultipartFile file) {
         String contentType = file.getContentType();
         return contentType != null ? contentType : "application/octet-stream";

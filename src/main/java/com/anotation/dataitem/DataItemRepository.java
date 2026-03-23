@@ -11,6 +11,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Spring Data JPA cho {@link DataItem}; hỗ trợ phân trang theo dataset, theo status, và kiểm tra trùng {@code contentUrl} trong một dataset.
+ * Các truy vấn JPQL theo project: lọc status ANNOTATED/REVIEWED, hoặc tồn tại ít nhất một {@link com.anotation.annotation.Annotation} qua task item — phục vụ danh sách đã gán nhãn và export.
+ * {@code findByDatasetProjectIdAndStatusIn} dùng tập status linh hoạt; các phương thức riêng ANNOTATED/REVIEWED tránh lỗi tham số IN với collection.
+ * Được {@link DataItemServiceImpl} dùng cho CRUD, bulk, thống kê/export cùng {@link com.anotation.annotation.AnnotationRepository}.
+ */
 @Repository
 public interface DataItemRepository extends JpaRepository<DataItem, UUID> {
 

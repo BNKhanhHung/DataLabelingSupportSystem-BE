@@ -5,8 +5,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request DTO for Admin to create a new user account.
- * Admin supplies a raw password — the service layer handles BCrypt hashing.
+ * DTO request khi Admin (hoặc API được phép) tạo hoặc cập nhật tài khoản {@link User}.
+ * <p>
+ * Mật khẩu gửi dạng plain text trên kênh bảo mật (HTTPS); service sẽ hash BCrypt trước khi lưu.
+ * {@link #systemRole} tùy chọn — nếu bỏ trống, entity gán mặc định {@link SystemRole#USER} khi persist.
  */
 public class UserCreateRequest {
 
@@ -25,7 +27,8 @@ public class UserCreateRequest {
     @NotBlank
     private String status;
 
-    private String systemRole; // optional — defaults to USER in service layer
+    /** Tên enum {@link SystemRole} dạng chuỗi (vd. USER, MANAGER); null/blank → mặc định ở tầng service/entity. */
+    private String systemRole;
 
     public String getUsername() {
         return username;

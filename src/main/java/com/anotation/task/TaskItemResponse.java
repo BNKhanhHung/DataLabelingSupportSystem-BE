@@ -3,8 +3,8 @@ package com.anotation.task;
 import java.util.UUID;
 
 /**
- * DTO for one item in a task (data item assigned to annotator).
- * Used by annotator labeling UI: taskItemId for submit annotation, contentUrl to display.
+ * DTO một dòng task item cho UI annotator: định danh task item/data item, URL nội dung hiển thị,
+ * và cờ {@code hasAnnotation} cho biết đã có bản ghi annotation hay chưa (tránh nộp trùng).
  */
 public class TaskItemResponse {
 

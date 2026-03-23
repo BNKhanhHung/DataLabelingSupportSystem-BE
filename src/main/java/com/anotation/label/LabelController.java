@@ -13,8 +13,18 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 /**
- * Label API: CRUD label theo project (name, description). Dùng trong gắn nhãn (annotator chọn label cho từng item).
- * GET /, /{id}, /project/{projectId}; POST /; PUT /{id}; DELETE /{id}.
+ * REST controller API quản lý <strong>label</strong> (nhãn phân loại) theo project, gốc {@code /api/labels}.
+ * <p>
+ * Nhãn được annotator/reviewer chọn khi làm việc trên từng data item. Hỗ trợ CRUD đầy đủ, lọc theo project và phân trang.
+ * </p>
+ * <ul>
+ *   <li>{@code GET /api/labels} — danh sách (phân trang)</li>
+ *   <li>{@code GET /api/labels/{id}} — theo id</li>
+ *   <li>{@code GET /api/labels/project/{projectId}} — nhãn trong project</li>
+ *   <li>{@code POST /api/labels} — tạo (201)</li>
+ *   <li>{@code PUT /api/labels/{id}} — sửa</li>
+ *   <li>{@code DELETE /api/labels/{id}} — xóa (204)</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/labels")

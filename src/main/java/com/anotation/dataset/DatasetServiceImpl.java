@@ -14,6 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+/**
+ * Triển khai {@link DatasetService}: CRUD dataset, tích hợp {@link ProjectRepository} và {@link DatasetMapper}.
+ * <p>
+ * Khi client gửi {@code sort} không khớp thuộc tính entity, bắt {@link PropertyReferenceException} và fallback sort theo {@code id}
+ * để tránh lỗi 500. Giao dịch mặc định ghi; các phương thức chỉ đọc được đánh dấu {@code readOnly = true}.
+ * </p>
+ */
 @Service
 @Transactional
 public class DatasetServiceImpl implements DatasetService {

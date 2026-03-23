@@ -5,6 +5,10 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
+/**
+ * Body request tạo/sửa label: {@code name} bắt buộc; {@code description} và {@code color} tùy chọn;
+ * {@code projectId} bắt buộc khi tạo để gắn nhãn vào project (chi tiết ràng buộc cập nhật project do service quyết định).
+ */
 public class LabelRequest {
 
     @NotBlank(message = "Label name is required")

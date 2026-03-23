@@ -3,6 +3,10 @@ package com.anotation.reviewfeedback;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * DTO phản hồi một lần review: trạng thái duyệt, comment, thời điểm tạo, cùng các id/URL
+ * phẳng để client không phải join nhiều tầng (annotation, task item, data item, reviewer).
+ */
 public class ReviewResponse {
 
     private UUID id;

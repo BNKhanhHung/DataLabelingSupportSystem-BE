@@ -22,6 +22,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Triển khai {@link NotificationService}: lấy user từ {@link SecurityContextHolder}, map entity sang {@link NotificationResponse},
+ * tạo thông báo an toàn khi user tồn tại, và {@link #checkAndCreateOverdueNotifications()} gửi nhắc quá hạn cho vai trò MANAGER/ADMIN.
+ * <p>
+ * {@link #markAllAsRead()} hiện xử lý tối đa một trang cố định (1000) bản ghi chưa đọc — cần lưu ý nếu khối lượng thông báo rất lớn.
+ * </p>
+ */
 @Service
 @Transactional
 public class NotificationServiceImpl implements NotificationService {

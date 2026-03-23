@@ -13,8 +13,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 /**
- * Annotation API: annotator gửi nhãn cho TaskItem (POST), sửa nội dung khi REJECTED (PATCH /{id}/content). Lấy theo task.
- * GET /, /{id}, /task/{taskId}; POST / (taskItemId, content = label name); PATCH /{id}/content; DELETE /{id}.
+ * REST controller cho nghiệp vụ annotation: người dùng đã đăng nhập (theo {@link com.anotation.auth.SecurityConfig}) có thể đọc và thao tác annotation.
+ * Tiền tố cơ sở: {@code /api/annotations}. Các endpoint chính: {@code GET /} (phân trang toàn bộ), {@code GET /{id}}, {@code GET /task/{taskId}} (theo task),
+ * {@code POST /} (nộp nhãn cho một task item), {@code PATCH /{id}/content} (sửa nội dung khi trạng thái REJECTED), {@code DELETE /{id}}.
+ * Phân quyền: USER được phép GET/POST/PATCH/DELETE trên nhánh này; ADMIN/MANAGER cũng có quyền qua rule chung cho {@code /api/annotations/**}.
+ * Request/response dùng {@link AnnotationRequest}, {@link AnnotationResponse} và {@link com.anotation.common.PageResponse} cho danh sách phân trang.
+ * Tài liệu OpenAPI: nhóm tag {@code Annotation}; một số GET hỗ trợ sort an toàn (vd. {@code id}, {@code status}, {@code createdAt}).
  */
 @RestController
 @RequestMapping("/api/annotations")

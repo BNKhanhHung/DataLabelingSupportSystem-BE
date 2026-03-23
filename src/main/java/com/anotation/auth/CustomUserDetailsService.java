@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Loads user by username OR email for Spring Security authentication.
- * Maps User.systemRole → Spring Security authority (ROLE_ADMIN / ROLE_USER).
+ * Triển khai {@link org.springframework.security.core.userdetails.UserDetailsService} cho Spring Security (form/login nội bộ hoặc luồng dùng UserDetails).
+ * {@code loadUserByUsername} nhận username hoặc email, tra {@link com.anotation.user.UserRepository}; nếu không có thì ném {@link org.springframework.security.core.userdetails.UsernameNotFoundException}.
+ * Mật khẩu trả về là {@code passwordHash} đã bcrypt trong DB; authority dạng {@code ROLE_<SystemRole>} (mặc định ROLE_USER nếu null).
+ * Phục vụ tích hợp chuẩn Security; song song, API stateless chủ yếu dùng JWT qua {@link JwtAuthenticationFilter}.
  */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {

@@ -4,7 +4,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Response cho export: thông tin data item kèm nhãn (annotation content) đã gắn.
+ * DTO JSON cho {@code GET /api/data-items/export} — xuất data item của một project đã có gán nhãn, kèm cột nhãn để tải CSV/JSON.
+ * {@code id}, {@code datasetId}, {@code datasetName}, {@code contentUrl}, {@code metadata}, {@code status}, {@code createdAt}: mirror thông tin {@link DataItemResponse} cơ bản.
+ * {@code label}: nội dung nhãn lấy từ annotation (chuỗi {@code content} trên bản ghi annotation liên kết data item), có thể rỗng nếu chưa map được.
+ * Được lắp ghép trong {@link DataItemServiceImpl#getLabeledByProjectForExport} cùng truy vấn {@link com.anotation.annotation.AnnotationRepository#findContentByDataItemIdIn}.
  */
 public class DataItemExportResponse {
 

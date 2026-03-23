@@ -2,9 +2,20 @@ package com.anotation.user;
 
 import org.springframework.stereotype.Component;
 
+/**
+ * Chuyển đổi giữa entity {@link User}, DTO {@link UserResponse} và {@link UserCreateRequest}.
+ * <p>
+ * Không bao giỽ map {@code passwordHash} ra response. Mật khẩu plain từ request được hash ở {@link UserServiceImpl}.
+ */
 @Component
 public class UserMapper {
 
+    /**
+     * Map entity sang DTO an toàn cho client (không lộ hash mật khẩu).
+     *
+     * @param user entity nguồn
+     * @return {@link UserResponse} đã điền
+     */
     public UserResponse toResponse(User user) {
         UserResponse response = new UserResponse();
         response.setId(user.getId());
@@ -23,7 +34,10 @@ public class UserMapper {
     }
 
     /**
-     * Maps request fields to entity — password hashing is handled in Service layer.
+     * Tạo entity mới từ request tạo user — chỉ các trường không nhạy cảm; hash mật khẩu do tầng service gán.
+     *
+     * @param request payload tạo user
+     * @return entity {@link User} chưa có {@code passwordHash} hợp lệ cho đến khi service encode
      */
     public User toEntity(UserCreateRequest request) {
         User user = new User();
@@ -35,8 +49,10 @@ public class UserMapper {
     }
 
     /**
-     * Update existing entity — does NOT update password (separate endpoint if
-     * needed).
+     * Cập nhật entity từ request: username, email, status. Không cập nhật mật khẩu tại đây (service xử lý riêng).
+     *
+     * @param request dữ liệu mới
+     * @param user    entity đích
      */
     public void updateEntity(UserCreateRequest request, User user) {
         user.setUsername(request.getUsername());

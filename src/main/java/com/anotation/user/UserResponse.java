@@ -3,6 +3,11 @@ package com.anotation.user;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * DTO trả về thông tin user qua API (không chứa mật khẩu hay hash).
+ * <p>
+ * Gồm định danh, username, email, trạng thái, tên {@link SystemRole} dạng chuỗi, số cảnh báo và mốc thời gian.
+ */
 public class UserResponse {
 
     private UUID id;

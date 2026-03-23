@@ -10,6 +10,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
 
+/**
+ * Xử lý tập trung các ngoại lệ trong lớp controller, trả về {@link ErrorResponse} với mã HTTP phù hợp.
+ * <p>
+ * Bao quát: từ chối truy cập (403), không tìm thấy (404), trùng lặp (409), yêu cầu/validation không hợp lệ (400),
+ * vi phạm toàn vẹn CSDL (400 với gợi ý migration khi liên quan constraint trạng thái task), và lỗi không mong đợi (500).
+ * </p>
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

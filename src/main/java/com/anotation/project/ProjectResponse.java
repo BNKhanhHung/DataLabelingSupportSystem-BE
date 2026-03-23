@@ -3,6 +3,13 @@ package com.anotation.project;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * DTO phản hồi thông tin dự án (project) cho API REST.
+ * <p>
+ * Dữ liệu được map từ entity {@link Project} kèm trạng thái tổng hợp
+ * {@link ProjectStatus} (tính từ các task thuộc dự án), dùng cho danh sách/chi tiết
+ * dự án phía client (Manager, v.v.).
+ */
 public class ProjectResponse {
 
     private UUID id;

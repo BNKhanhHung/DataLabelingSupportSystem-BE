@@ -3,6 +3,9 @@ package com.anotation.notification;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * DTO trả về thông báo cho client: loại, tiêu đề, nội dung, tham chiếu thực thể liên quan (nếu có), trạng thái đọc và thời gian tạo.
+ */
 public class NotificationResponse {
 
     private UUID id;

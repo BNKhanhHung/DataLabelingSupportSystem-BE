@@ -7,6 +7,12 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Hợp đồng dịch vụ data item: đọc phân trang, theo dataset và status, tạo từ request, upload file, đổi status, bulk URL, xuất đã gán nhãn, xóa.
+ * Triển khai: {@link DataItemServiceImpl} (lưu trữ Supabase qua {@link com.anotation.storage.SupabaseStorageService} khi upload).
+ * {@code getLabeledByProject} / {@code getLabeledByProjectForExport} phục vụ báo cáo và {@code GET /export} với nhãn từ annotation.
+ * Kiểu trả về danh sách phân trang dùng {@link com.anotation.common.PageResponse}{@code <}{@link DataItemResponse}{@code >}.
+ */
 public interface DataItemService {
     PageResponse<DataItemResponse> getAll(Pageable pageable);
 

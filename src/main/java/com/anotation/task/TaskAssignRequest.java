@@ -4,7 +4,11 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
-/** Request body cho Manager đổi phân công annotator/reviewer của task. */
+/**
+ * Body PATCH khi Manager/Admin gán lại annotator và reviewer cho một {@link Task} đã tồn tại.
+ * <p>
+ * Cả hai id đều bắt buộc; quyền và điều kiện trạng thái task do {@link TaskService} kiểm tra.
+ */
 public class TaskAssignRequest {
 
     @NotNull(message = "Annotator ID is required")
