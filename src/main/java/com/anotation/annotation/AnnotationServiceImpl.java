@@ -1,5 +1,8 @@
 package com.anotation.annotation;
 
+import com.anotation.activitylog.ActivityAction;
+import com.anotation.activitylog.ActivityLogService;
+
 import com.anotation.common.PageResponse;
 import com.anotation.exception.BadRequestException;
 import com.anotation.exception.DuplicateException;
@@ -46,6 +49,7 @@ public class AnnotationServiceImpl implements AnnotationService {
     private final UserRepository userRepository;
     private final AnnotationMapper annotationMapper;
     private final ReviewFeedbackRepository reviewFeedbackRepository;
+    private final ActivityLogService activityLogService;
 
     public AnnotationServiceImpl(AnnotationRepository annotationRepository,
             TaskItemRepository taskItemRepository,
@@ -53,7 +57,8 @@ public class AnnotationServiceImpl implements AnnotationService {
             DataItemRepository dataItemRepository,
             UserRepository userRepository,
             AnnotationMapper annotationMapper,
-            ReviewFeedbackRepository reviewFeedbackRepository) {
+            ReviewFeedbackRepository reviewFeedbackRepository,
+            ActivityLogService activityLogService) {
         this.annotationRepository = annotationRepository;
         this.taskItemRepository = taskItemRepository;
         this.taskRepository = taskRepository;
@@ -61,6 +66,7 @@ public class AnnotationServiceImpl implements AnnotationService {
         this.userRepository = userRepository;
         this.annotationMapper = annotationMapper;
         this.reviewFeedbackRepository = reviewFeedbackRepository;
+        this.activityLogService = activityLogService;
     }
 
     // ── Read ─────────────────────────────────────────────────────────────────────
@@ -154,6 +160,10 @@ public class AnnotationServiceImpl implements AnnotationService {
             taskRepository.save(task);
         }
 
+        // Ghi nhật ký hoạt động
+        activityLogService.log(currentUser, ActivityAction.ANNOTATION_SUBMITTED, "ANNOTATION", annotation.getId(),
+                "Annotator " + currentUser.getUsername() + " nộp nhãn cho TaskItem: " + taskItem.getId());
+
         return annotationMapper.toResponse(annotation);
     }
 
@@ -186,14 +196,26 @@ public class AnnotationServiceImpl implements AnnotationService {
         dataItem.setStatus(DataItemStatus.ANNOTATED);
         dataItemRepository.save(dataItem);
 
-        return annotationMapper.toResponse(annotationRepository.save(annotation));
+        Annotation saved = annotationRepository.save(annotation);
+
+        // Ghi nhật ký hoạt động
+        activityLogService.log(currentUser, ActivityAction.ANNOTATION_UPDATED, "ANNOTATION", id,
+                "Annotator " + currentUser.getUsername() + " cập nhật nội dung annotation (sửa sau khi bị REJECTED)");
+
+        return annotationMapper.toResponse(saved);
     }
 
     // ── Delete ───────────────────────────────────────────────────────────────────
 
     @Override
     public void delete(UUID id) {
-        findOrThrow(id);
+        Annotation annotation = findOrThrow(id);
+        User currentUser = getCurrentUser();
+
+        // Ghi nhật ký TRƯỚC khi xóa
+        activityLogService.log(currentUser, ActivityAction.ANNOTATION_DELETED, "ANNOTATION", id,
+                "Xóa annotation cho TaskItem: " + annotation.getTaskItem().getId());
+
         annotationRepository.deleteById(id);
     }
 

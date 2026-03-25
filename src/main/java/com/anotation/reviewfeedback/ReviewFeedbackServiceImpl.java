@@ -1,5 +1,8 @@
 package com.anotation.reviewfeedback;
 
+import com.anotation.activitylog.ActivityAction;
+import com.anotation.activitylog.ActivityLogService;
+
 import com.anotation.common.PageResponse;
 import com.anotation.exception.BadRequestException;
 import com.anotation.exception.DuplicateException;
@@ -44,6 +47,7 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
     private final DataItemRepository dataItemRepository;
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
+    private final ActivityLogService activityLogService;
 
     /**
      * @param reviewFeedbackRepository kho lưu {@link ReviewFeedback}
@@ -60,7 +64,8 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
             TaskRepository taskRepository,
             DataItemRepository dataItemRepository,
             UserRepository userRepository,
-            ReviewMapper reviewMapper) {
+            ReviewMapper reviewMapper,
+            ActivityLogService activityLogService) {
         this.reviewFeedbackRepository = reviewFeedbackRepository;
         this.annotationRepository = annotationRepository;
         this.taskItemRepository = taskItemRepository;
@@ -68,6 +73,7 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
         this.dataItemRepository = dataItemRepository;
         this.userRepository = userRepository;
         this.reviewMapper = reviewMapper;
+        this.activityLogService = activityLogService;
     }
 
     // ── Read ─────────────────────────────────────────────────────────────────────
@@ -198,6 +204,11 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
         feedback.setComment(request.getComment());
         reviewFeedbackRepository.save(feedback);
 
+        // Ghi nhật ký hoạt động
+        activityLogService.log(currentUser, ActivityAction.REVIEW_SUBMITTED, "REVIEW", feedback.getId(),
+                "Reviewer " + currentUser.getUsername() + " review annotation "
+                + annotation.getId() + " → " + request.getStatus());
+
         // ── Status transitions (chỉ cập nhật Annotation + DataItem, Task do Reviewer
         // quyết) ──
 
@@ -219,11 +230,18 @@ public class ReviewFeedbackServiceImpl implements ReviewFeedbackService {
 
         return reviewMapper.toResponse(feedback);
     }
+
     // ── Delete ───────────────────────────────────────────────────────────────────
 
     @Override
     public void delete(UUID id) {
-        findOrThrow(id);
+        ReviewFeedback feedback = findOrThrow(id);
+        User currentUser = getCurrentUser();
+
+        // Ghi nhật ký TRƯỚC khi xóa
+        activityLogService.log(currentUser, ActivityAction.REVIEW_DELETED, "REVIEW", id,
+                "Xóa review feedback cho annotation: " + feedback.getAnnotation().getId());
+
         reviewFeedbackRepository.deleteById(id);
     }
 

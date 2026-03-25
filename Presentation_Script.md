@@ -112,3 +112,19 @@
 "Khi Task ở trạng thái `REVIEWED` nghĩa là khâu gán nhãn đã qua kiểm định đạt chất lượng. Manager (Quản lý dự án) chỉ việc vào chốt lại lần cuối và cập nhật Task thành `COMPLETED`."
 
 "Như vậy quy trình của một Task gán nhãn khép kín và phân quyền chặt chẽ đã hoàn tất! Em xin kết thúc phần demo luồng nghiệp vụ chính ạ."
+
+---
+
+### BƯỚC 6: XEM LẠI NHẬT KÝ HOẠT ĐỘNG (BẰNG CHỨNG BẤT KHẢ XÂM PHẠM)
+
+**🗣️ Lời nói:**
+"Và để đảm bảo tính minh bạch tuyệt đối, tránh cãi vã giữa nhân viên và quản lý về việc ai đã làm gì vào lúc nào, hệ thống của em có trang bị chức năng **Activity Log (Nhật ký hoạt động)**."
+
+**🖱️ Hành động:** 
+- Đăng nhập lại tài khoản `manager` / `managerpassword`, copy Token, Authorize.
+- Kéo xuống API `GET /api/activity-logs`, bấm Execute.
+
+**🗣️ Lời nói:**
+"Thầy cô có thể thấy, mọi thao tác từ lúc em tạo Task, Annotator nộp bài, Reviewer duyệt bài... nãy giờ đều được API này ghi lại đầy đủ đến từng giây. Bảng nhật ký này được thiết kế theo dạng **Bất biến (Immutable)** - tức là chỉ có API để Đọc (GET), hoàn toàn không có API để Sửa (PUT/PATCH) hay Xóa (DELETE). Kể cả em là Admin cũng không thể vào đây xóa dấu vết tội ác của mình được ạ."
+
+"Đến đây em xin chính thức khép lại phần demo của nhóm. Cảm ơn quý thầy cô đã lắng nghe ạ!"

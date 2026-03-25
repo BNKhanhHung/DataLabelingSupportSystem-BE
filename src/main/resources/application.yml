@@ -7,10 +7,10 @@ server:
 
 spring:
   datasource:
-    url: ${SUPABASE_DB_URL:jdbc:postgresql://aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require}
-    username: ${SUPABASE_DB_USERNAME:postgres.wqillyzrmdbjvxfnckhx}
-    password: ${SUPABASE_DB_PASSWORD:SofwareDevelopemnt}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:sqlserver://localhost:1433;databaseName=data_labeling_db;trustServerCertificate=true;encrypt=false
+    username: sa
+    password: 12345
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
     hikari:
       maximum-pool-size: 2
       minimum-idle: 1
@@ -23,7 +23,8 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.SQLServer2012Dialect
+        format_sql: true
 
 springdoc:
   api-docs:

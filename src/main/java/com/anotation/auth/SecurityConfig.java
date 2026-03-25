@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -27,6 +28,7 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -81,6 +83,9 @@ public class SecurityConfig {
                         // ── USER (Annotator/Reviewer): từ chối task được giao ─
                         .requestMatchers(HttpMethod.PATCH, "/api/tasks/*/refuse").authenticated()
 
+                        // ── Nhật ký hoạt động: self-service /my-history cho mọi user ─
+                        .requestMatchers(HttpMethod.GET, "/api/activity-logs/my-history/**").authenticated()
+
                         // ── Chỉnh sửa (POST/PUT/PATCH/DELETE): chỉ ADMIN & MANAGER; không cho USER sửa role, user-role, user (trừ đổi mật khẩu đã cho ở trên) ─
                         .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/roles/**").hasAnyRole("ADMIN", "MANAGER")
@@ -90,6 +95,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/labels/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/datasets/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/api/data-items/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers("/api/activity-logs/**").hasAnyRole("ADMIN", "MANAGER")
+
 
                         // ── Còn lại (API tương lai) — ADMIN & MANAGER ─────────
                         .anyRequest().hasAnyRole("ADMIN", "MANAGER"))

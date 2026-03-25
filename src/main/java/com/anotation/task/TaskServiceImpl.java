@@ -1,5 +1,7 @@
 package com.anotation.task;
 
+import com.anotation.activitylog.ActivityAction;
+import com.anotation.activitylog.ActivityLogService;
 import com.anotation.annotation.AnnotationRepository;
 import com.anotation.common.PageResponse;
 import com.anotation.reviewfeedback.ReviewFeedbackRepository;
@@ -54,6 +56,7 @@ public class TaskServiceImpl implements TaskService {
     private final AnnotationRepository annotationRepository;
     private final ReviewFeedbackRepository reviewFeedbackRepository;
     private final NotificationService notificationService;
+    private final ActivityLogService activityLogService;
 
     /**
      * @param taskRepository         truy cập bảng task
@@ -76,7 +79,8 @@ public class TaskServiceImpl implements TaskService {
             TaskMapper taskMapper,
             AnnotationRepository annotationRepository,
             ReviewFeedbackRepository reviewFeedbackRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            ActivityLogService activityLogService) {
         this.taskRepository = taskRepository;
         this.taskItemRepository = taskItemRepository;
         this.projectRepository = projectRepository;
@@ -87,6 +91,7 @@ public class TaskServiceImpl implements TaskService {
         this.annotationRepository = annotationRepository;
         this.reviewFeedbackRepository = reviewFeedbackRepository;
         this.notificationService = notificationService;
+        this.activityLogService = activityLogService;
     }
 
     // ── Read operations ──────────────────────────────────────────────────────────
@@ -382,6 +387,11 @@ public class TaskServiceImpl implements TaskService {
         notificationService.create(annotatorId, "TASK_ASSIGNED", "Task mới được phân công",
                 "Bạn có task mới trong dự án \"" + projectName + "\".", "TASK", task.getId());
 
+        // Ghi nhật ký hoạt động
+        activityLogService.log(currentUser, ActivityAction.TASK_CREATED, "TASK", task.getId(),
+                "Tạo task mới trong project \"" + projectName + "\", giao cho annotator: "
+                + annotator.getUsername() + ", reviewer: " + reviewer.getUsername());
+
         return taskMapper.toResponse(task, dataItemIds);
     }
 
@@ -393,6 +403,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse updateStatus(UUID id, TaskStatus status) {
         Task task = findOrThrow(id);
+        TaskStatus oldStatus = task.getStatus();
         task.setStatus(status);
         taskRepository.save(task);
         String msg = "Manager đã cập nhật trạng thái task thành \"" + status + "\".";
@@ -402,6 +413,11 @@ public class TaskServiceImpl implements TaskService {
             notificationService.create(task.getReviewer().getId(), "TASK_STATUS_UPDATED", "Task đã được nộp để review",
                     "Task trong dự án \"" + task.getProject().getName() + "\" đã được nộp. Vui lòng review.", "TASK", id);
         }
+
+        // Ghi nhật ký hoạt động
+        activityLogService.log(getCurrentUser(), ActivityAction.TASK_STATUS_CHANGED, "TASK", id,
+                "Đổi trạng thái task từ " + oldStatus + " → " + status);
+
         return toResponse(task);
     }
 
@@ -413,6 +429,11 @@ public class TaskServiceImpl implements TaskService {
         Task task = findOrThrow(id);
         task.setDueDate(dueDate);
         taskRepository.save(task);
+
+        // Ghi nhật ký hoạt động
+        activityLogService.log(getCurrentUser(), ActivityAction.TASK_DUE_DATE_UPDATED, "TASK", id,
+                "Cập nhật deadline task thành: " + dueDate);
+
         return toResponse(task);
     }
 
@@ -452,6 +473,10 @@ public class TaskServiceImpl implements TaskService {
 
         notificationService.create(task.getReviewer().getId(), "TASK_STATUS_UPDATED", "Task đã được nộp để review",
                 "Annotator đã nộp task trong dự án \"" + task.getProject().getName() + "\". Vui lòng review.", "TASK", taskId);
+
+        // Ghi nhật ký hoạt động
+        activityLogService.log(currentUser, ActivityAction.TASK_SUBMITTED, "TASK", taskId,
+                "Annotator " + currentUser.getUsername() + " nộp task để review");
 
         return toResponse(task);
     }
@@ -496,6 +521,11 @@ public class TaskServiceImpl implements TaskService {
             taskRepository.save(task);
             notificationService.create(task.getAnnotator().getId(), "TASK_STATUS_UPDATED", "Task cần chỉnh sửa",
                     "Reviewer đã từ chối một số nhãn. Vui lòng chỉnh sửa và nộp lại.", "TASK", taskId);
+
+            // Ghi nhật ký hoạt động
+            activityLogService.log(currentUser, ActivityAction.TASK_REVIEW_COMPLETED, "TASK", taskId,
+                    "Reviewer " + currentUser.getUsername() + " hoàn tất review → DENIED (" + rejectedCount + " annotation bị từ chối)");
+
             return toResponse(task);
         }
 
@@ -509,6 +539,11 @@ public class TaskServiceImpl implements TaskService {
             notificationService.create(manager.getId(), "TASK_STATUS_UPDATED", "Task đã được review xong",
                     "Reviewer đã hoàn tất review task trong dự án \"" + projectName + "\". Bạn có thể xem và xác nhận.", "TASK", taskId);
         }
+
+        // Ghi nhật ký hoạt động
+        activityLogService.log(currentUser, ActivityAction.TASK_REVIEW_COMPLETED, "TASK", taskId,
+                "Reviewer " + currentUser.getUsername() + " hoàn tất review → REVIEWED (tất cả annotation đều APPROVED)");
+
         return toResponse(task);
     }
 
@@ -554,6 +589,10 @@ public class TaskServiceImpl implements TaskService {
             String roleLabel = (previousStatus == TaskStatus.SUBMITTED) ? "reviewer" : "annotator";
             String msg = "Task thuộc project \"" + projectName + "\" đã quá hạn (" + roleLabel + " chưa hoàn thành đúng hạn).";
             notificationService.create(responsibleUser.getId(), "DEADLINE_OVERDUE_TASK", "Task quá hạn", msg, "TASK", t.getId());
+
+            // Ghi nhật ký hoạt động (System tự động đánh dấu)
+            activityLogService.log(responsibleUser, ActivityAction.TASK_OVERDUE_MARKED, "TASK", t.getId(),
+                    "Task quá hạn — " + roleLabel + " " + responsibleUser.getUsername() + " chưa hoàn thành đúng hạn");
         }
         taskRepository.saveAll(tasks);
     }
@@ -639,6 +678,10 @@ public class TaskServiceImpl implements TaskService {
                     "Task bị từ chối", notifMessage, "TASK", taskId);
         }
 
+        // Ghi nhật ký hoạt động
+        activityLogService.log(currentUser, ActivityAction.TASK_REFUSED, "TASK", taskId,
+                roleName + " " + currentUser.getUsername() + " từ chối task. Lý do: " + reason);
+
         return toResponse(task);
     }
 
@@ -687,6 +730,11 @@ public class TaskServiceImpl implements TaskService {
                 "Bạn được phân công task cho project: " + (saved.getProject() != null ? saved.getProject().getName() : ""),
                 "TASK", saved.getId());
 
+        // Ghi nhật ký hoạt động
+        activityLogService.log(getCurrentUser(), ActivityAction.TASK_REASSIGNED, "TASK", taskId,
+                "Phân công lại task cho annotator: " + annotator.getUsername()
+                + ", reviewer: " + reviewer.getUsername());
+
         return toResponse(saved);
     }
 
@@ -699,6 +747,11 @@ public class TaskServiceImpl implements TaskService {
     public void delete(UUID id) {
         Task task = findOrThrow(id);
         UUID taskId = task.getId();
+
+        // Ghi nhật ký TRƯỚC khi xóa (vì sau khi xóa thì không còn data để log)
+        activityLogService.log(getCurrentUser(), ActivityAction.TASK_DELETED, "TASK", taskId,
+                "Xóa task trong project \"" + (task.getProject() != null ? task.getProject().getName() : "N/A") + "\"");
+
         // Xóa theo thứ tự phụ thuộc: review_feedbacks → annotations → task_items → task
         reviewFeedbackRepository.findByTaskId(taskId, Pageable.unpaged()).getContent()
                 .forEach(reviewFeedbackRepository::delete);

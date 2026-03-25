@@ -41,10 +41,10 @@
 ### A. Core Features (Tính năng Xương sống nền tảng)
 1. Xây dựng và chốt sơ đồ **ERD Data Schema** phức tạp (Entity Relationship) cho toàn bộ hệ thống (Users, Mối liên kết Annotators/Reviewers, Projects, Tasks, DataItems, Annotations, Feedbacks).
 2. Tích hợp Auth & Hệ thống phân quyền (`MANAGER`, `ANNOTATOR`, `REVIEWER`).
-3. Luồng Setup Quản Lý:
-   - Quản lý kho **Dataset** (Bộ tập hợp hàng ngàn tấm hình).
-   - Quản lý **Danh mục Label** (Label Template - để vẽ nhãn cho AI học).
-   - Tạo mới và quản lý vòng đời **Dự án (Project)**.
+3. Luồng Setup Quản Lý & **KHÁI NIỆM NGHIỆP VỤ CƠ BẢN**:
+   - 📦 **Dataset (Bộ dữ liệu - "Cái Thùng Đựng"):** Vỏ hộp định danh dùng để gom nhóm các file ảnh có cùng chủ đề (VD: *X-Quang Phổi Tháng 3*). Một Project có thể gán nhiều Dataset.
+   - 🍎 **DataItem (Phần tử dữ liệu - "Trái cây bên trong"):** Từng file ảnh thô, đơn lẻ nằm bên trong Thùng Dataset (VD: *xray_001.jpg*). Khi Manager giao việc, thực chất là xúc 50 cái DataItem này vứt cho Annotator.
+   - 🏷️ **Label (Nhãn Dán - "Tem phân loại"):** Các danh mục định nghĩa sẵn (VD: *Ung Thư*, *Khỏe Mạnh*) để Annotator dựa vào đó dán lên bức ảnh làm dữ liệu dạy AI.
 
 ### B. Business Features (Nghiệp vụ Xử lý Công việc cốt lõi)
 1. Cấu trúc liên kết **Phân Công Việc (Task Assignment):** 
@@ -180,74 +180,117 @@
 1. **Tạo rổ chứa Data:** Manager gọi API `POST /api/datasets`. 
    👉 **(Mở file `DatasetServiceImpl.java` -> Hàm `create()`)**
    ```java
+   // Map dữ liệu từ Request DTO sang Entity PostgreSQL
    Dataset dataset = datasetMapper.toEntity(request);
-   // Lưu kho
+   // Khởi tạo List rỗng đón DataItem
+   dataset.setDataItems(new ArrayList<>()); 
+   // Lưu kho CSDL
    dataset = datasetRepository.save(dataset); 
+   return datasetMapper.toResponse(dataset);
    ```
 2. **Bắn 1.000 Ảnh Lên Server:** Manager ném 1000 đường link hình thô (máy bay, xe tăng...) tóm gọn 1 phát vào API `POST /api/data-items/bulk`. Cục BE quét siêu tốc, lọc trùng lặp rồi lưu vào kho CSDL.
    👉 **(Mở file `DataItemServiceImpl.java` -> Hàm `bulkCreate()`)**
    ```java
    for (String url : request.getContentUrls()) {
+       if (url == null || url.isBlank()) continue;
        // Thuật toán: Chặn đứng nếu phát hiện ảnh đã tồn tại trong kho rổ này
        if (dataItemRepository.existsByContentUrlAndDatasetId(url, datasetId)) continue;
-       // ... Lưu ảnh mới
+       
+       DataItem item = new DataItem();
+       item.setDataset(dataset);
+       item.setContentUrl(url);
+       item.setStatus(DataItemStatus.NEW); // Cờ đánh dấu ảnh Mới Tinh
+       dataItems.add(item);
    }
+   dataItemRepository.saveAll(dataItems); // Lưu 1000 dòng 1 lúc siêu tốc
    ```
 3. **Khai sinh Dự Án (Project):** Manager tạo Project mới mang tên "Nhận diện vũ khí". Lúc này `ProjectStatus` đang là `NOT_STARTED`.
    👉 **(Mở file `ProjectServiceImpl.java` -> Hàm `create()`)**
    ```java
+   Project project = new Project();
+   project.setName(request.getName());
    project.setStatus(ProjectStatus.NOT_STARTED); 
    projectRepository.save(project);
    ```
-4. **Phân Công Task cho nhân viên:** Manager bấm nút Phân Công (Assign). Backend lôi 1.000 tấm ảnh kia ra tạo thành 1.000 cái **Task** rồi cất xuống kho.
+4. **Phân Công Task cho nhân viên:** Manager bấm nút Phân Công (Assign). Backend lôi 1.000 tấm ảnh kia ra tạo thành 1.000 cái **Task** rồi cất xuống kho. Kèm theo cơ chế kiểm tra **Giới Hạn WIP Limit**.
    👉 **(Mở file `TaskServiceImpl.java` -> Hàm `create()`)**
+   ```java
+   // WIP Limit: Annotator không được ôm quá 3 task đang hoạt động
+   long annotatorActiveCount = taskRepository.countActiveTasksByAnnotatorId(annotatorId);
+   if (annotatorActiveCount >= 3) {
+       throw new BadRequestException("Annotator đã đạt giới hạn 3 task đang hoạt động.");
+   }
+
+   // Set deadline: Mặc định 24h sau nếu không truyền lên
+   java.time.LocalDateTime now = java.time.LocalDateTime.now();
+   task.setDueDate(request.getDueDate() != null ? request.getDueDate() : now.plusHours(24));
+   
+   // Đổi cờ DataItem sang ASSIGNED và Status Task thành IN_PROGRESS
+   task.setStatus(TaskStatus.IN_PROGRESS);
+   ```
 
 ### Giai đoạn 2: Công nhân cày cuốc (Actor: ANNOTATOR)
 1. Ông A log vào hệ thống. API `GET /api/tasks` check trúng Token của ông A -> Trả về màn hình đúng những tấm ảnh được giao. Task lúc này đổi cờ thành `IN_PROGRESS`.
-   👉 **(Mở file `TaskServiceImpl.java` -> Hàm `getUserTasks()`)**
-2. Ông A gõ lệnh tọa độ vẽ cái hộp khoanh vùng chiếc xe Tăng. Nhấn nộp bài thông qua API `PUT /api/tasks/{id}/submit`. 
-3. Backend chụp ngay khoảnh khắc đó, chạy thuật toán quét Giờ Phút Server (`LocalDateTime`).
-   - *Nếu bị trễ Dealide:* Backend chửi "Trễ hạn rồi" và đá văng lỗi HTTP 400.
-   - *Nếu ngon lành:* Task được đổi cờ thành `SUBMITTED` chờ kho đạn ông duyệt bài.
-   👉 **(Mở file `TaskServiceImpl.java` -> Hàm `submitTask()`)**
+2. Ông A gõ lệnh tọa độ vẽ cái hộp khoanh vùng chiếc xe Tăng. Nhấn nộp bài thông qua API `PATCH /api/tasks/{id}/submit`. 
+3. Backend chụp ngay khoảnh khắc đó, chạy Validation kiểm tra xem đã vẽ đủ hộp cho MỌI TẤM ẢNH chưa.
+   👉 **(Mở file `TaskServiceImpl.java` -> Hàm `submitForReview()`)**
    ```java
-   // Chốt chặn nộp bài trễ
-   if (task.getDueDate() != null && LocalDateTime.now().isAfter(task.getDueDate())) {
-       throw new RuntimeException("Xin lỗi, Task đã quá hạn nộp bài (Ngậm ngùi)!");
+   // Chốt chặn 1: Chỉ cho nộp nếu Task đang IN_PROGRESS hoặc DENIED
+   if (task.getStatus() != TaskStatus.IN_PROGRESS && task.getStatus() != TaskStatus.DENIED && task.getStatus() != TaskStatus.OVERDUE) {
+       throw new BadRequestException("Task must be IN_PROGRESS or DENIED to submit for review.");
    }
-   // Đổi cờ giao nộp
+
+   // Chốt chặn 2: Đảm bảo không nộp giấy trắng (Bắt buộc phải gán nhãn 100%)
+   long missingCount = taskItemRepository.countItemsWithoutAnnotation(taskId);
+   if (missingCount > 0) {
+       throw new BadRequestException("Cannot submit: " + missingCount + " item(s) have not been annotated yet.");
+   }
+
+   // Đổi cờ giao nộp chờ Duyệt
    task.setStatus(TaskStatus.SUBMITTED);
    ```
 
 ### Giai đoạn 3: Thanh tra chấm thi (Actor: REVIEWER)
 1. Ông B (Reviewer) log vào, thấy danh sách Task đang chờ ở mục `SUBMITTED`. Bật hình lên xem. Thấy ông A khoanh vùng cái xe Tăng mà dính cả gốc cây. 
-2. Ông B gọi API `POST /api/review-feedbacks`.
-   - Chọn cờ **REJECTED**.
-   - Ghi lý do (Feedback): *"Mày khoanh sát lại cái xích xe tăng giùm coi"*. 
-   - Trạng thái Task bị đạp ngược lại thành `REJECTED`. *(Nếu ông B lừa không chịu gõ lý do, Backend sẽ tung RuntimeException cấm duyệt)*.
+2. Ông B gọi API `POST /api/review-feedbacks`. Cắt cờ **REJECTED** lên tấm ảnh đó và ghi lý do chửi bới. Mọi tấm ảnh còn lại đánh cờ **APPROVED**.
    👉 **(Mở file `ReviewFeedbackServiceImpl.java` -> Hàm `create()`)**
    ```java
    // Thuật toán: Bắt ép nhập Feedback nếu đánh trượt bài
    if (request.getStatus() == TaskStatus.REJECTED && (request.getComments() == null || request.getComments().isBlank())) {
        throw new RuntimeException("Reviewer làm ơn ghi rõ lý do Reject giùm!");
    }
-   task.setStatus(request.getStatus()); // Đạp task về REJECTED
    ```
-3. Ông A lóc cóc vào vẽ lại cho mướt rượt rồi Submit lại -> Ông B xem ổn áp thì gọi API đó lần nữa để chọn chốt đơn **APPROVED**. Bấy giờ Task chính thức lên bàn thờ `COMPLETED`. Mọi Annotation được Lock khóa vĩnh viễn bảo tồn bằng chứng.
-   👉 **(Mở file `TaskServiceImpl.java` -> Hàm `reviewTask()`)**
+3. Ông B hoàn tất phiên kiểm duyệt, bấm lệnh Submit kết quả `PATCH /{id}/complete-review`. Backend tự động đánh giá: Nếu có dù chỉ 1 tấm ảnh bị REJECT, nó sẽ đá phạt toàn bộ cái Task văng ngược về trạng thái `DENIED` bắt ông A sửa lại.
+   👉 **(Mở file `TaskServiceImpl.java` -> Hàm `completeReview()`)**
    ```java
-   // Khi đã Approved thì Task mãn nguyện đổi thành COMPLETED
-   if (status == TaskStatus.APPROVED) {
-       task.setStatus(TaskStatus.COMPLETED);
+   // Kiểm tra có annotation bị REJECTED không
+   long rejectedCount = annotationRepository.countRejectedByTaskId(taskId);
+   if (rejectedCount > 0) {
+       // Có annotation bị từ chối → task DENIED (Annotator sửa lại)
+       task.setStatus(TaskStatus.DENIED);
+       notificationService.create(..., "Reviewer đã từ chối một số nhãn. Vui lòng chỉnh sửa và nộp lại.");
+   } else {
+       // Tất cả mượt mà thì chốt đơn
+       task.setStatus(TaskStatus.REVIEWED);
    }
    ```
 
-### Giai đoạn 4: Thu hoạch và Tổng kết (Actor: AUTO-SYSTEM)
-1. **Dự án đóng hòm:** Không cần ai đụng tay, mỗi lần Manager kéo Dashboard xem, cục BE âm thầm chạy vòng lặp kiểm tra toàn bộ 1.000 cái Task con. Thấy cả 1.000 cái đều đã cờ `COMPLETED` -> Backend tự động hất cờ cái Project bự thành `COMPLETED` màu xanh lá cây chói lọi.
+### Giai đoạn 4: Thu hoạch & Tổng kết (Actor: AUTO-SYSTEM)
+1. **Dự án đóng hòm:** Mỗi lần Manager kéo Dashboard xem, cục BE chạy vòng lặp kiểm tra toàn bộ Task con. Thấy cả ngàn cái đều đã cờ `COMPLETED/REVIEWED` -> Backend tự động hất cờ cái Project bự thành `COMPLETED` màu xanh lá cây chói lọi.
    👉 **(Mở file `ProjectMapper.java` -> Hàm `computeStatus()`)**
    ```java
    boolean allCompleted = true;
    for (Task t : tasks) { 
+       if (t.getStatus() != TaskStatus.COMPLETED && t.getStatus() != TaskStatus.REVIEWED) {
+           allCompleted = false;
+       }
+   }
+   if (allCompleted) return ProjectStatus.COMPLETED;
+   ```
+2. **Kiểm soát Tình Huống Tranh Chấp (Race Condition - Edge Case):** 
+   - Nếu trong lúc làm việc, do Task khó quá, **cả Annotator và Reviewer cùng lúc tay cầm chuột bấm nút "Từ Chối Task" (Refuse Task)**. 
+   - Trạng thái Task sẽ phản hồi cực kỳ mượt mà: Yêu cầu của người bấm đầu tiên lật Task sang chữ `OPEN`. Chớp mắt sau yêu cầu thứ hai ập tới, vì status đang là `OPEN` (hợp lệ cho Refuse), hệ thống vẫn tiếp nhận êm ái, KHÔNG crash Server, KHÔNG deadlock.
+   - Kết quả: Cái Task cắm chốt an toàn ở mốc `OPEN`, và ông Manager nhận được rành rọt **2 cái chuông Notification** phàn nàn chê bai từ 2 người lính khác nhau! (Quy trình quản lý nhân sự hoàn hảo).
        if (t.getStatus() != TaskStatus.COMPLETED) allCompleted = false; 
    }
    if (allCompleted) return ProjectStatus.COMPLETED;
