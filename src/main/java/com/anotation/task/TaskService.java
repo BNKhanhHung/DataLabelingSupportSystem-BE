@@ -58,6 +58,15 @@ public interface TaskService {
     PageResponse<TaskResponse> getByAnnotator(UUID annotatorId, Pageable pageable);
 
     /**
+     * Lịch sử task của annotator: các task đã nộp/được duyệt/đã hoàn tất (không còn trong danh sách “cần gán nhãn”).
+     *
+     * @param annotatorId UUID user annotator
+     * @param pageable tham số phân trang
+     * @return trang kết quả lịch sử
+     */
+    PageResponse<TaskResponse> getAnnotatorHistory(UUID annotatorId, Pageable pageable);
+
+    /**
      * Lấy hàng đợi review của reviewer: task ở trạng thái chờ duyệt (ví dụ SUBMITTED, OVERDUE) mà reviewer đó được giao.
      *
      * @param reviewerId UUID user reviewer
@@ -65,6 +74,15 @@ public interface TaskService {
      * @return trang kết quả
      */
     PageResponse<TaskResponse> getByReviewer(UUID reviewerId, Pageable pageable);
+
+    /**
+     * Lịch sử task của reviewer: các task reviewer đã review xong hoặc đã hoàn tất.
+     *
+     * @param reviewerId UUID user reviewer
+     * @param pageable tham số phân trang
+     * @return trang kết quả lịch sử
+     */
+    PageResponse<TaskResponse> getReviewerHistory(UUID reviewerId, Pageable pageable);
 
     /**
      * Tìm kiếm task theo tên (hoặc tiêu chí tìm kiếm do repository định nghĩa) và lọc theo {@link TaskStatus}.

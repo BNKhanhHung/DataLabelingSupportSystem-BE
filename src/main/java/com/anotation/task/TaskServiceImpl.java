@@ -188,6 +188,22 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<TaskResponse> getAnnotatorHistory(UUID annotatorId, Pageable pageable) {
+        // “Đã gán nhãn”: annotator đã submit hoặc task đã được review/hoàn tất
+        List<TaskStatus> statuses = List.of(TaskStatus.SUBMITTED, TaskStatus.REVIEWED, TaskStatus.COMPLETED);
+        try {
+            return PageResponse.from(
+                    taskRepository.findByAnnotatorIdAndStatusIn(annotatorId, statuses, pageable),
+                    this::toResponse);
+        } catch (PropertyReferenceException e) {
+            return PageResponse.from(
+                    taskRepository.findByAnnotatorIdAndStatusIn(annotatorId, statuses, safePageable(pageable)),
+                    this::toResponse);
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -219,6 +235,21 @@ public class TaskServiceImpl implements TaskService {
         } catch (PropertyReferenceException e) {
             return PageResponse.from(
                     taskRepository.findByReviewerIdAndStatusIn(reviewerId, reviewQueueStatuses, safePageable(pageable)),
+                    this::toResponse);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<TaskResponse> getReviewerHistory(UUID reviewerId, Pageable pageable) {
+        List<TaskStatus> statuses = List.of(TaskStatus.REVIEWED, TaskStatus.COMPLETED);
+        try {
+            return PageResponse.from(
+                    taskRepository.findByReviewerIdAndStatusIn(reviewerId, statuses, pageable),
+                    this::toResponse);
+        } catch (PropertyReferenceException e) {
+            return PageResponse.from(
+                    taskRepository.findByReviewerIdAndStatusIn(reviewerId, statuses, safePageable(pageable)),
                     this::toResponse);
         }
     }

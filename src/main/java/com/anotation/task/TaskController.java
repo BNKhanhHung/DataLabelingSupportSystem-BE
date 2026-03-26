@@ -104,6 +104,17 @@ public class TaskController {
     }
 
     /**
+     * Lịch sử task annotator: các task đã nộp/được duyệt/đã hoàn tất (không còn trong danh sách “cần gán nhãn”).
+     */
+    @GetMapping("/annotator/{annotatorId}/history")
+    @Operation(summary = "Annotator task history (SUBMITTED/REVIEWED/COMPLETED)")
+    public ResponseEntity<PageResponse<TaskResponse>> getAnnotatorHistory(
+            @PathVariable UUID annotatorId,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(taskService.getAnnotatorHistory(annotatorId, pageable));
+    }
+
+    /**
      * Task đang IN_PROGRESS của annotator (đang làm việc).
      *
      * @param annotatorId UUID annotator
@@ -131,6 +142,17 @@ public class TaskController {
             @PathVariable UUID reviewerId,
             @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(taskService.getByReviewer(reviewerId, pageable)); // 200
+    }
+
+    /**
+     * Lịch sử task reviewer: các task đã review xong hoặc đã hoàn tất.
+     */
+    @GetMapping("/reviewer/{reviewerId}/history")
+    @Operation(summary = "Reviewer task history (REVIEWED/COMPLETED)")
+    public ResponseEntity<PageResponse<TaskResponse>> getReviewerHistory(
+            @PathVariable UUID reviewerId,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(taskService.getReviewerHistory(reviewerId, pageable));
     }
 
     /**

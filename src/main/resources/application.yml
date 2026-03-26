@@ -7,16 +7,13 @@ server:
 
 spring:
   datasource:
-    # --- MÔI TRƯỜNG LOCAL (Chạy mượt nhất ở máy cá nhân) ---
-    url: jdbc:postgresql://localhost:5433/data_labeling_db
-    username: postgres
-    password: 12345
-    
-    # --- MÔI TRƯỜNG SUPABASE (Bỏ dấu # để dùng khi cần đẩy lên team) ---
-    # url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db.wqillyzrmdbjvxfnckhx.supabase.co:5432/postgres?sslmode=require}
-    # username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    # password: ${SPRING_DATASOURCE_PASSWORD:SofwareDevelopemnt}
-    
+    # Mặc định trỏ Supabase (pooler). Khi chạy local, set env:
+    # SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/<db_name>
+    # SPRING_DATASOURCE_USERNAME=<user_local>
+    # SPRING_DATASOURCE_PASSWORD=<password_local>
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres.wqillyzrmdbjvxfnckhx}
+    password: ${SPRING_DATASOURCE_PASSWORD:SofwareDevelopemnt}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5

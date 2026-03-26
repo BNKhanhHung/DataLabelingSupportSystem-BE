@@ -34,6 +34,16 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
   Page<Task> findByAnnotatorId(UUID annotatorId, Pageable pageable);
 
   /**
+   * Task của annotator có trạng thái thuộc tập (dùng cho lịch sử: SUBMITTED/REVIEWED/COMPLETED...).
+   *
+   * @param annotatorId UUID annotator
+   * @param statuses    tập trạng thái
+   * @param pageable    phân trang
+   * @return trang task
+   */
+  Page<Task> findByAnnotatorIdAndStatusIn(UUID annotatorId, Collection<TaskStatus> statuses, Pageable pageable);
+
+  /**
    * @param reviewerId UUID reviewer
    * @param pageable   phân trang
    * @return trang task có reviewer tương ứng
