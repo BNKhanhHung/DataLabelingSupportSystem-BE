@@ -93,4 +93,15 @@ Trước khi làm trò gì cũng phải lấy chìa khóa vào nhà. Bạn cần
 6. **Chém gió:** *"Bộ API KPI này của em là ngụm nước cất để Frontend móc Data vẽ Chart Biểu diễn màn hình Dashboard của Sếp đó Cô. Dòm đây cái bắt điểm yếu nhân sự ngay khỏi trốn!"*
 
 ---
+
+### CHIÊU 6: DEMO TÍNH NĂNG ANTI-SUICIDE (Admin không thể tự tay bóp dái)
+*Giáo viên muốn xem phân quyền của bạn có kẽ hở không. Lỡ Admin tự xóa Acc của mình thì sao?*
+
+1. **Chuẩn bị:** Cắm Token **Manager**. Bạn cần lấy chính cái UUID (ID ID) của acc Manager này. Mở API `GET /api/users/me` -> Bấm Execute -> Copy dòng `"id": "..."` của Manager ra notepad.
+2. **Thao tác:** Kéo tới thư mục `user-controller` -> Mở API `DELETE /api/users/{id}` (API xóa User).
+3. Dán ngay cái ID của chính bạn Manager vừa copy vào ô `id`. Dõng dạc nói: "Em xin phép Delete bản thân hệ thống xem có cho phép không ạ". Bấm **Execute**.
+4. **Kết quả:** Văng ngay lập tức thông báo đỏ chót **400 Bad Request** với dòng tin nhắn: *"You cannot delete your own account."*
+5. **Chém gió:** *"Dạ thưa Cô, chặn 1 Manager xóa lính thì bình thường, nhưng việc Manager xỉn rượu xóa nhầm tài khoản của chính mình là Lỗ Hổng Chết Người. Backend của em đã cấy chốt chặn ở tầng sâu nhất (Service): Lấy Token soi xem Mày đang là ai, và đọ với cái ID Mày đang định chém. Trùng nhau là em tát văng ra liền bảo vệ nguyên vẹn cấu trúc nhân sự hệ thống ạ!"*
+
+---
 *(In hoặc mở màn hình ngầm file này ra, đọc thuộc lòng trình tự này, trỏ chuột vèo vèo như Hacker thì thầy cô auto 10 điểm tuyệt đối nha bạn tôi ơi!)*

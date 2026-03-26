@@ -60,9 +60,10 @@ public interface UserService {
     UserResponse update(UUID id, UserCreateRequest request);
 
     /**
-     * Xóa user theo id.
+     * Xóa user theo id, đồng thời chặn việc user tự xóa chính tài khoản đang đăng nhập.
      *
-     * @param id UUID
+     * @param id              UUID của user cần xóa
+     * @param currentUsername username của phiên đang đăng nhập thực hiện lệnh xóa
      */
-    void delete(UUID id);
+    void delete(UUID id, String currentUsername);
 }

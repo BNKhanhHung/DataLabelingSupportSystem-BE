@@ -152,8 +152,14 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     @Override
-    public void delete(UUID id) {
-        findOrThrow(id);
+    public void delete(UUID id, String currentUsername) {
+        User targetUser = findOrThrow(id);
+        
+        // Prevent users (Admin/Manager) from deleting their own account
+        if (targetUser.getUsername().equals(currentUsername)) {
+            throw new BadRequestException("You cannot delete your own account.");
+        }
+        
         userRepository.deleteById(id);
     }
 

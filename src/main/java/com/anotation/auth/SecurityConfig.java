@@ -117,7 +117,8 @@ public class SecurityConfig {
                 "http://localhost:5000", "http://127.0.0.1:5000",
                 "http://localhost:8081", "http://127.0.0.1:8081",
                 "http://localhost:4173", "http://127.0.0.1:4173",
-                "http://localhost:50337", "http://127.0.0.1:50337"
+                "http://localhost:50337", "http://127.0.0.1:50337",
+                "http://localhost:63342", "http://127.0.0.1:63342"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

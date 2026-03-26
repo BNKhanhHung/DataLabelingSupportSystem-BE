@@ -17,6 +17,10 @@
 - **Sếp vặn:** "Dùng ID số tăng dần cho lẹ, bày đặt vẽ chuyện UUID làm gì cho tốn dung lượng ổ cứng?"
 - **Phản gank:** "Dạ nếu để ID `1, 2, 3` thì thằng Hacker nó sẽ mò ra được ngay ID `4` là Task của ai rồi nó chọc mũi gọi API phá sập luôn! Em xài chuẩn `UUID` ngẫu nhiên tỷ phím tỷ tự như này (`123e-4567...`) là để Che Đậy Định Danh (Obfuscation), chặn đứng mưu đồ đoán bừa URL của Hacker bẩn ạ. Big Tech tụi nó đều xài cái này hết cô ơi!"
 
+**Q12: Mày cấp quyền cho Manager xóa User, lỡ ông Manager ổng xỉn ổng ngứa tay ổng ấn nút Xóa cmn chính tài khoản của ổng rồi hệ thống mất Tướng thì sao?**
+- **Sếp vặn:** "Phân quyền lỏng lẻo vậy rớt đồ án nha em, Manager tự sát được luôn hả?"
+- **Phản gank:** "Dạ hông thưa Cô ơi, em đâu có non tay vậy ạ! Trong Backend của em, ở ngay tầng `UserService`, hàm `delete` trước khi vung đao xóa Data, nó phải bóc cái Token của thằng đang giữ chuôi dao ra xem mày là ai (`currentUsername`). Hàm nó đọ cái Tên tài khoản chuẩn bị bị xóa với cái tên thằng đang thao tác, nếu Trùng Nhau Y Chang thì lập tức cái kiếm bị bật tuông văng ra mã **400 Bad Request**, chửi xéo vô mặt: *"Bạn không thể tự xóa chính mình"*. Kể cả Admin tối cao nhào vô tự sát cũng bị Code em chặn đứng cản lại ạ, an toàn tuyệt đối!"
+
 ---
 
 ## ⚔️ NHÓM 2: CÂU HỎI VỀ NGHIỆP VỤ & TẢI TRỌNG (BUSINESS LOGIC)

@@ -127,8 +127,8 @@ public class UserController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a user")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        userService.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable UUID id, Authentication authentication) {
+        userService.delete(id, authentication.getName());
         return ResponseEntity.noContent().build(); // 204
     }
 }

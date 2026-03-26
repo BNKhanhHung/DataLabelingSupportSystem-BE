@@ -7,12 +7,19 @@ server:
 
 spring:
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=data_labeling_db;trustServerCertificate=true;encrypt=false
-    username: sa
+    # --- MÔI TRƯỜNG LOCAL (Chạy mượt nhất ở máy cá nhân) ---
+    url: jdbc:postgresql://localhost:5433/data_labeling_db
+    username: postgres
     password: 12345
-    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    
+    # --- MÔI TRƯỜNG SUPABASE (Bỏ dấu # để dùng khi cần đẩy lên team) ---
+    # url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db.wqillyzrmdbjvxfnckhx.supabase.co:5432/postgres?sslmode=require}
+    # username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    # password: ${SPRING_DATASOURCE_PASSWORD:SofwareDevelopemnt}
+    
+    driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 2
+      maximum-pool-size: 5
       minimum-idle: 1
   servlet:
     multipart:
@@ -23,7 +30,7 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.SQLServer2012Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
 springdoc:
